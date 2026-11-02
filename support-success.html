@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07070a">
+  <meta name="description" content="Return page for MuseAI support checkout.">
+  <title>Thank you — MuseAI</title>
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body class="museai-promo">
+  <header class="promo-header">
+    <a class="promo-wordmark" href="museai.html"><span class="brand-symbol" aria-hidden="true">✳</span> MUSEAI</a>
+    <nav class="promo-nav" aria-label="Main navigation"><a href="index.html">Lumen Home</a><a href="museai.html">MuseAI</a><a href="orbital-gallery.html">Galleries</a></nav>
+
+    <div class="museai-ticker" role="note" aria-label="MuseAI studio ticker: imagination in motion, tiny robots and big ideas, make room to imagine">
+      <div class="museai-ticker-track" aria-hidden="true">
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+      </div>
+    </div>
+  </header>
+  <main class="promo-section support-success-main">
+    <section class="support-success-card reveal-in" aria-labelledby="success-title">
+      <p class="museai-eyebrow">SUPPORT / RETURN</p>
+      <h1 id="success-title">Thanks for keeping<br><span>the ideas moving.</span></h1>
+      <p id="provider-status" class="museai-copy" aria-live="polite">If you came from checkout, the payment provider has returned you to this page. Please check your provider's receipt or account for the final payment status.</p>
+      <div class="hero-actions"><a class="museai-cta magnetic" href="index.html">Return to Lumen Home <span aria-hidden="true">↗</span></a><a class="museai-text-link" href="museai.html">Explore MuseAI →</a></div>
+    </section>
+  </main>
+  <footer class="promo-footer">
+    <a class="promo-wordmark" href="index.html"><span class="brand-symbol" aria-hidden="true">✳</span> LUMEN</a>
+    <div class="promo-footer-links" aria-label="Contact emails"><a href="mailto:careers@fedpromptly.com">careers@fedpromptly.com</a><a href="mailto:support@fedpromptly.com">support@fedpromptly.com</a><a href="mailto:business@fedpromptly.com">business@fedpromptly.com</a><a href="mailto:contact@fedpromptly.com">contact@fedpromptly.com</a></div>
+  </footer>
+  <script>
+    (() => {
+      const messages = {
+        paypal: 'PayPal returned you to MuseAI. Please check your PayPal receipt or account for the final subscription status.',
+        stripe: 'Stripe returned you to MuseAI. Please check your Stripe receipt or account for the final payment status.'
+      };
+      const provider = new URLSearchParams(window.location.search).get('provider');
+      if (messages[provider]) document.getElementById('provider-status').textContent = messages[provider];
+    })();
+  </script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

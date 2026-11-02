@@ -1,9 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="description" content="Lumen is the home gallery for MuseAI: a spotlight archive of creative AI concepts, visual systems, and imagined interfaces.">
+  <meta name="theme-color" content="#07070a">
+  <meta property="og:title" content="Lumen — MuseAI Spotlight Gallery">
+  <meta property="og:description" content="Lumen is the home gallery for MuseAI: a spotlight archive of creative AI concepts, visual systems, and imagined interfaces.">
+  <meta property="og:image" content="social-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lumen — Spotlight Gallery</title>
+<title>Lumen — MuseAI Spotlight Gallery</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
 
@@ -336,16 +349,26 @@
     <div class="brand">Lumen<span>·</span>Wall</div>
     <p class="hint">Move to light the wall &nbsp;·&nbsp; Click a frame</p>
     <nav class="gallery-tabs" aria-label="Gallery pages">
-      <a href="index.html" aria-current="page">Home</a>
-      <a href="orbital-gallery.html">Orbital</a>
-      <a href="memories.html">Memories</a>
-      <a href="prism.html">Prism</a>
-      <a href="deck.html">Deck</a>
+      <a href="index.html" aria-current="page">Features</a>
+      <a href="exclusives.html">Exclusives</a>
+      <a href="memories.html">Feed</a>
+      <a href="orbital-gallery.html">Explore</a>
+      <a href="prism.html">Avatars</a>
+      <a href="projects.html">Projects</a>
+      <a href="corridor.html">Premium</a>
       <a href="profile.html">Profile</a>
-      <a href="ribbon.html">Ribbon</a>
-          <a href="corridor.html">Corridor</a>
-     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+      <a href="deck.html">Portfolio</a>
+</nav>
+<p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
+
     <button class="reveal" id="reveal" type="button" aria-pressed="false">Reveal all</button>
+  
+    <div class="museai-ticker" role="note" aria-label="MuseAI studio ticker: imagination in motion, tiny robots and big ideas, make room to imagine">
+      <div class="museai-ticker-track" aria-hidden="true">
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+      </div>
+    </div>
   </header>
 
   <main class="wall" id="wall" aria-label="Spotlight photo wall"></main>
@@ -369,22 +392,21 @@
      Collection
   ------------------------------------------------------------------ */
   const ITEMS = [
-    { seed:'lumen-a1',  title:'Amber Hour',    place:'Reykjavík', year:2023, ar: 4/5   },
-    { seed:'lumen-b2',  title:'Salt Flats',    place:'Uyuni',     year:2022, ar: 3/2   },
-    { seed:'lumen-c3',  title:'Night Market',  place:'Taipei',    year:2024, ar: 2/3   },
-    { seed:'lumen-d4',  title:'Pine Ridge',    place:'Oregon',    year:2021, ar: 1/1   },
-    { seed:'lumen-e5',  title:'Blue Corridor', place:'Lisbon',    year:2023, ar: 3/4   },
-    { seed:'lumen-f6',  title:'Terrace Rain',  place:'Kyoto',     year:2022, ar: 16/10 },
-    { seed:'lumen-g7',  title:'Dune Lines',    place:'Merzouga',  year:2020, ar: 4/3   },
-    { seed:'lumen-h8',  title:'Glass Lobby',   place:'Rotterdam', year:2024, ar: 2/3   },
-    { seed:'lumen-i9',  title:'Low Tide',      place:'Normandy',  year:2021, ar: 3/2   },
-    { seed:'lumen-j10', title:'Steam & Neon',  place:'Osaka',     year:2023, ar: 5/4   },
-    { seed:'lumen-k11', title:'White Room',    place:'Berlin',    year:2022, ar: 1/1   },
-    { seed:'lumen-l12', title:'Last Ferry',    place:'Bergen',    year:2020, ar: 4/5   }
+    { seed: "assets/gallery-images/promo-pulled-the-plug.webp", title: "Promo Pulled The Plug", category: "Product promo", ar: 1.000000 },
+    { seed: "assets/gallery-images/promo-propose-approve-execute.webp", title: "Promo Propose Approve Execute", category: "Product promo", ar: 1.500000 },
+    { seed: "assets/gallery-images/promo-ask-first.webp", title: "Promo Ask First", category: "Product promo", ar: 1.000000 },
+    { seed: "assets/gallery-images/fed-edu-approved-login-2.webp", title: "Fed-EDU Approved Login 2", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-approved-login-3.webp", title: "Fed-EDU Approved Login 3", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-friendly-login-1.webp", title: "Fed-EDU Friendly Login 1", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-friendly-login-2.webp", title: "Fed-EDU Friendly Login 2", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-friendly-login-3.webp", title: "Fed-EDU Friendly Login 3", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-friendly-login-4.webp", title: "Fed-EDU Friendly Login 4", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/fed-edu-friendly-login-5.webp", title: "Fed-EDU Friendly Login 5", category: "Fed-EDU onboarding", ar: 1.777778 },
+    { seed: "assets/gallery-images/promo-horizontal-2.webp", title: "Promo Horizontal (2)", category: "Product promo", ar: 1.777778 },
+    { seed: "assets/gallery-images/muse-relay-05-any-file-type.webp", title: "Muse Relay 05 Any File Type", category: "MuseAI feature illustration", ar: 1.777778 }
   ];
-
-  const thumb = it => `https://picsum.photos/seed/${it.seed}/760/${Math.round(760 / it.ar)}`;
-  const full  = it => `https://picsum.photos/seed/${it.seed}/1500/${Math.round(1500 / it.ar)}`;
+  const thumb = it => it.seed;
+  const full  = it => it.seed;
 
   /* ------------------------------------------------------------------
      Elements & state
@@ -419,7 +441,7 @@
     fig.style.transitionDelay = (i * 45) + 'ms';
     fig.setAttribute('role', 'button');
     fig.setAttribute('tabindex', '0');
-    fig.setAttribute('aria-label', `${item.title}, ${item.place}, ${item.year}`);
+    fig.setAttribute('aria-label', `${item.title}, ${item.category}`);
 
     const base = new Image();
     base.className = 'base';
@@ -551,7 +573,7 @@
     lbImg.src = full(it);
     lbImg.alt = it.title;
     lbTitle.textContent = it.title;
-    lbMeta.textContent = `${it.place} · ${it.year}`;
+    lbMeta.textContent = `${it.category}`;
 
     lb.classList.add('open');
     lb.setAttribute('aria-hidden', 'false');
@@ -592,5 +614,48 @@
 
 })();
 </script>
+<footer class="museai-site-footer" role="contentinfo">
+  <span class="museai-footer-brand">MUSEAI · STUDIO</span>
+  <div class="museai-footer-contacts" aria-label="Contact emails">
+    <a href="mailto:careers@fedpromptly.com">careers@fedpromptly.com</a>
+    <a href="mailto:support@fedpromptly.com">support@fedpromptly.com</a>
+    <a href="mailto:business@fedpromptly.com">business@fedpromptly.com</a>
+    <a href="mailto:contact@fedpromptly.com">contact@fedpromptly.com</a>
+  </div>
+  <button class="museai-support-trigger" id="museai-support-open" type="button" aria-haspopup="dialog" aria-controls="museai-support-panel">Support MuseAI</button>
+</footer>
+<div class="museai-layer" id="museai-support-panel" hidden>
+  <button class="museai-layer-scrim" type="button" aria-label="Close support panel" data-museai-close></button>
+  <section class="museai-support-card" role="dialog" aria-modal="true" aria-labelledby="museai-support-title">
+    <button class="museai-close" type="button" aria-label="Close" data-museai-close>×</button>
+    <p class="museai-eyebrow">KEEP THE IDEAS MOVING</p>
+    <h2 id="museai-support-title">Support the MuseAI archive</h2>
+    <p class="museai-copy">Payment choices are hidden until you complete the age check. Your date of birth is checked in this browser and is not saved or sent by this page.</p>
+    <div class="museai-age-intro" id="museai-age-intro">
+      <p>Confirm that you are at least 18 to view payment options.</p>
+      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view options <span aria-hidden="true">↗</span></button>
+      <p class="museai-fineprint">This is a client-side age check, not identity verification. It is not a substitute for legal or payment-provider requirements.</p>
+    </div>
+    <div class="museai-age-form-wrap" id="museai-age-form-wrap" hidden>
+      <form id="museai-age-form" class="museai-age-form">
+        <label for="museai-dob">Date of birth</label>
+        <input id="museai-dob" name="dob" type="date" required autocomplete="bday" max="9999-12-31">
+        <p class="museai-age-error" id="museai-age-error" aria-live="polite"></p>
+        <div class="museai-actions"><button class="museai-cta" type="submit">Continue if 18+ <span aria-hidden="true">↗</span></button><button class="museai-quiet" type="button" data-museai-close>Cancel</button></div>
+      </form>
+    </div>
+    <div class="museai-payment-options" id="museai-payment-options" hidden>
+      <p class="museai-unlocked">Age check complete · payment providers load below</p>
+      <h3>Choose a way to support</h3>
+      <div class="museai-paygrid">
+        <article class="museai-paycard"><h4>PayPal subscription</h4><div id="paypal-button-container-P-4FD24238VX4902214NK2XP2Y"></div></article>
+        <article class="museai-paycard"><h4>Card via Stripe</h4><div id="stripe-button-container"></div></article>
+      </div>
+      <a class="museai-coffee-link" href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20book&emoji=%F0%9F%93%96&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a book on Buy Me a Coffee"></a>
+      <p class="museai-fineprint">Payment terms and amounts are shown by the payment provider before checkout. Support is optional.</p>
+    </div>
+  </section>
+</div>
+<script src="assets/js/app.js" defer></script>
 </body>
 </html>

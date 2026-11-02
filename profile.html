@@ -1,9 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="description" content="A magnetic field of MuseAI images and creative technology concepts to explore.">
+  <meta name="theme-color" content="#07070a">
+  <meta property="og:title" content="MuseAI Magnetic — Image Field">
+  <meta property="og:description" content="A magnetic field of MuseAI images and creative technology concepts to explore.">
+  <meta property="og:image" content="social-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Magnetic — Profile</title>
+<title>MuseAI Magnetic — Image Field</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { min-height: 100%; margin: 0; }
@@ -335,16 +348,26 @@
   <header class="bar">
     <div class="brand">Magnetic<span>·</span>Field</div>
     <nav class="gallery-tabs" aria-label="Gallery pages">
-      <a href="index.html">Home</a>
-      <a href="orbital-gallery.html">Orbital</a>
-      <a href="memories.html">Memories</a>
-      <a href="prism.html">Prism</a>
-      <a href="deck.html">Deck</a>
+      <a href="index.html">Features</a>
+      <a href="exclusives.html">Exclusives</a>
+      <a href="memories.html">Feed</a>
+      <a href="orbital-gallery.html">Explore</a>
+      <a href="prism.html">Avatars</a>
+      <a href="projects.html">Projects</a>
+      <a href="corridor.html">Premium</a>
       <a href="profile.html" aria-current="page">Profile</a>
-      <a href="ribbon.html">Ribbon</a>
-          <a href="corridor.html">Corridor</a>
-     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+      <a href="deck.html">Portfolio</a>
+</nav>
+<p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
+
     <p class="hint" id="hint">Move to attract &nbsp;·&nbsp; Click to open</p>
+  
+    <div class="museai-ticker" role="note" aria-label="MuseAI studio ticker: imagination in motion, tiny robots and big ideas, make room to imagine">
+      <div class="museai-ticker-track" aria-hidden="true">
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+        <div class="museai-ticker-group"><span>IMAGINATION IN MOTION</span><i>✦</i><span>TINY ROBOTS · BIG IDEAS</span><i>✦</i><span>MAKE ROOM TO IMAGINE</span><i>✦</i><span>HUMAN CURIOSITY, MACHINE SPARKS</span><i>✦</i></div>
+      </div>
+    </div>
   </header>
 
   <main class="wrap">
@@ -374,30 +397,30 @@
   "use strict";
 
   /* ------------------------------------------------------------------
-     Collection — [seed, title, place, year, size]
+     Collection — supplied artwork, category, and tile size
      size: '' | 'w' | 'h' | 'wh'
   ------------------------------------------------------------------ */
   const ITEMS = [
-    { seed:'mag-aurora',  title:'Aurora Field',   place:'Iceland',   year:2023, size:'wh' },
-    { seed:'mag-salt',    title:'Salt Horizon',   place:'Uyuni',     year:2022, size:''   },
-    { seed:'mag-market',  title:'Night Market',   place:'Taipei',    year:2024, size:'h'  },
-    { seed:'mag-pine',    title:'Pine Ridge',     place:'Oregon',    year:2021, size:''   },
-    { seed:'mag-azulejo', title:'Blue Corridor',  place:'Lisbon',    year:2023, size:''   },
-    { seed:'mag-rain',    title:'Terrace Rain',   place:'Kyoto',     year:2022, size:'w'  },
-    { seed:'mag-dune',    title:'Dune Lines',     place:'Merzouga',  year:2020, size:''   },
-    { seed:'mag-lobby',   title:'Glass Lobby',    place:'Rotterdam', year:2024, size:''   },
-    { seed:'mag-tide',    title:'Low Tide',       place:'Normandy',  year:2021, size:'h'  },
-    { seed:'mag-steam',   title:'Steam & Neon',   place:'Osaka',     year:2023, size:''   },
-    { seed:'mag-white',   title:'White Room',     place:'Berlin',    year:2022, size:'wh' },
-    { seed:'mag-ferry',   title:'Last Ferry',     place:'Bergen',    year:2020, size:''   },
-    { seed:'mag-canyon',  title:'Red Canyon',     place:'Utah',      year:2019, size:''   },
-    { seed:'mag-tower',   title:'Radio Tower',    place:'Riga',      year:2021, size:'w'  },
-    { seed:'mag-quiet',   title:'Quiet Street',   place:'Porto',     year:2023, size:''   }
+    { seed: "assets/gallery-images/museai-android-10-new-04.webp", title: "MuseAI Android 10 New 04", category: "MuseAI mobile campaign", size: "wh" },
+    { seed: "assets/gallery-images/museai-android-muse-clone-v2.webp", title: "MuseAI Android Muse Clone V2", category: "MuseAI mobile campaign", size: "" },
+    { seed: "assets/gallery-images/museai-android-two-devices-v1.webp", title: "MuseAI Android Two Devices V1", category: "MuseAI mobile campaign", size: "h" },
+    { seed: "assets/gallery-images/museai-android-dual-apps-v1.webp", title: "MuseAI Android Dual Apps V1", category: "MuseAI mobile campaign", size: "" },
+    { seed: "assets/gallery-images/museai-android-dual-apps-v2.webp", title: "MuseAI Android Dual Apps V2", category: "MuseAI mobile campaign", size: "" },
+    { seed: "assets/gallery-images/muse-app-store-landscape-04.webp", title: "Muse App Store Landscape 04", category: "MuseAI App Store campaign", size: "w" },
+    { seed: "assets/gallery-images/muse-app-store-03.webp", title: "Muse App Store 03", category: "MuseAI App Store campaign", size: "" },
+    { seed: "assets/gallery-images/muse-app-store-landscape-05.webp", title: "Muse App Store Landscape 05", category: "MuseAI App Store campaign", size: "" },
+    { seed: "assets/gallery-images/muse-app-store-01.webp", title: "Muse App Store 01", category: "MuseAI App Store campaign", size: "h" },
+    { seed: "assets/gallery-images/muse-app-store-04.webp", title: "Muse App Store 04", category: "MuseAI App Store campaign", size: "" },
+    { seed: "assets/gallery-images/muse-app-store-08.webp", title: "Muse App Store 08", category: "MuseAI App Store campaign", size: "wh" },
+    { seed: "assets/gallery-images/muse-app-store-07.webp", title: "Muse App Store 07", category: "MuseAI App Store campaign", size: "" },
+    { seed: "assets/gallery-images/muse-18-tiny-download.webp", title: "Muse 18 Tiny Download", category: "MuseAI campaign artwork", size: "" },
+    { seed: "assets/gallery-images/muse-13-big-brain.webp", title: "Muse 13 Big Brain", category: "MuseAI Windows app visuals", size: "w" },
+    { seed: "assets/gallery-images/muse-07-app-sushi.webp", title: "Muse 07 App Sushi", category: "MuseAI campaign artwork", size: "" }
   ];
 
   const N = ITEMS.length;
-  const thumb = s => `https://picsum.photos/seed/${s}/640/640`;
-  const full  = s => `https://picsum.photos/seed/${s}/1500/1100`;
+  const thumb = s => s;
+  const full  = s => s;
 
   /* ------------------------------------------------------------------
      DOM
@@ -436,7 +459,7 @@
       (item.size.includes('w') ? ' w2' : '') +
       (item.size.includes('h') ? ' h2' : '');
     el.style.animationDelay = (i * 55) + 'ms';
-    el.setAttribute('aria-label', `${item.title}, ${item.place}, ${item.year}`);
+    el.setAttribute('aria-label', `${item.title}, ${item.category}`);
     el.dataset.index = i;
 
     const img = new Image();
@@ -449,7 +472,7 @@
 
     const cap = document.createElement('div');
     cap.className = 'cap';
-    cap.innerHTML = `<b>${item.title}</b><i>${item.place} · ${item.year}</i>`;
+    cap.innerHTML = `<b>${item.title}</b><i>${item.category}</i>`;
 
     el.append(img, sheen, cap);
     el.addEventListener('click', () => openLightbox(i));
@@ -618,7 +641,7 @@
     lbImg.src = full(it.seed);
     lbImg.alt = it.title;
     lbTitle.textContent = it.title;
-    lbMeta.textContent = `${it.place} · ${it.year}`;
+    lbMeta.textContent = `${it.category}`;
 
     lb.classList.add('open');
     lb.setAttribute('aria-hidden', 'false');
@@ -690,5 +713,48 @@
 
 })();
 </script>
+<footer class="museai-site-footer" role="contentinfo">
+  <span class="museai-footer-brand">MUSEAI · STUDIO</span>
+  <div class="museai-footer-contacts" aria-label="Contact emails">
+    <a href="mailto:careers@fedpromptly.com">careers@fedpromptly.com</a>
+    <a href="mailto:support@fedpromptly.com">support@fedpromptly.com</a>
+    <a href="mailto:business@fedpromptly.com">business@fedpromptly.com</a>
+    <a href="mailto:contact@fedpromptly.com">contact@fedpromptly.com</a>
+  </div>
+  <button class="museai-support-trigger" id="museai-support-open" type="button" aria-haspopup="dialog" aria-controls="museai-support-panel">Support MuseAI</button>
+</footer>
+<div class="museai-layer" id="museai-support-panel" hidden>
+  <button class="museai-layer-scrim" type="button" aria-label="Close support panel" data-museai-close></button>
+  <section class="museai-support-card" role="dialog" aria-modal="true" aria-labelledby="museai-support-title">
+    <button class="museai-close" type="button" aria-label="Close" data-museai-close>×</button>
+    <p class="museai-eyebrow">KEEP THE IDEAS MOVING</p>
+    <h2 id="museai-support-title">Support the MuseAI archive</h2>
+    <p class="museai-copy">Payment choices are hidden until you complete the age check. Your date of birth is checked in this browser and is not saved or sent by this page.</p>
+    <div class="museai-age-intro" id="museai-age-intro">
+      <p>Confirm that you are at least 18 to view payment options.</p>
+      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view options <span aria-hidden="true">↗</span></button>
+      <p class="museai-fineprint">This is a client-side age check, not identity verification. It is not a substitute for legal or payment-provider requirements.</p>
+    </div>
+    <div class="museai-age-form-wrap" id="museai-age-form-wrap" hidden>
+      <form id="museai-age-form" class="museai-age-form">
+        <label for="museai-dob">Date of birth</label>
+        <input id="museai-dob" name="dob" type="date" required autocomplete="bday" max="9999-12-31">
+        <p class="museai-age-error" id="museai-age-error" aria-live="polite"></p>
+        <div class="museai-actions"><button class="museai-cta" type="submit">Continue if 18+ <span aria-hidden="true">↗</span></button><button class="museai-quiet" type="button" data-museai-close>Cancel</button></div>
+      </form>
+    </div>
+    <div class="museai-payment-options" id="museai-payment-options" hidden>
+      <p class="museai-unlocked">Age check complete · payment providers load below</p>
+      <h3>Choose a way to support</h3>
+      <div class="museai-paygrid">
+        <article class="museai-paycard"><h4>PayPal subscription</h4><div id="paypal-button-container-P-4FD24238VX4902214NK2XP2Y"></div></article>
+        <article class="museai-paycard"><h4>Card via Stripe</h4><div id="stripe-button-container"></div></article>
+      </div>
+      <a class="museai-coffee-link" href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20book&emoji=%F0%9F%93%96&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a book on Buy Me a Coffee"></a>
+      <p class="museai-fineprint">Payment terms and amounts are shown by the payment provider before checkout. Support is optional.</p>
+    </div>
+  </section>
+</div>
+<script src="assets/js/app.js" defer></script>
 </body>
 </html>
