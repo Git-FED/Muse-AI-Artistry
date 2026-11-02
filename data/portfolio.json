@@ -1,0 +1,64 @@
+{
+  "name": "MuseAI",
+  "publisher": "FED-OS",
+  "home": "index.html",
+  "promotional_page": "museai.html",
+  "description": "A visual archive of creative AI concepts, imagined interfaces, and ideas in motion.",
+  "contact": {
+    "careers": "careers@fedpromptly.com",
+    "support": "support@fedpromptly.com",
+    "business": "business@fedpromptly.com",
+    "general": "contact@fedpromptly.com"
+  },
+  "galleries": [
+    {
+      "title": "Features",
+      "path": "index.html",
+      "role": "Primary gallery"
+    },
+    {
+      "title": "Exclusives",
+      "path": "exclusives.html"
+    },
+    {
+      "title": "Feed",
+      "path": "memories.html"
+    },
+    {
+      "title": "Explore",
+      "path": "orbital-gallery.html"
+    },
+    {
+      "title": "Avatars",
+      "path": "prism.html"
+    },
+    {
+      "title": "Projects",
+      "path": "projects.html"
+    },
+    {
+      "title": "Premium",
+      "path": "corridor.html"
+    },
+    {
+      "title": "Profile",
+      "path": "profile.html"
+    },
+    {
+      "title": "Portfolio",
+      "path": "deck.html"
+    }
+  ],
+  "support": {
+    "paypal_plan_id": "P-4FD24238VX4902214NK2XP2Y",
+    "stripe_buy_button_id": "buy_btn_1UJKaaJaRf233kfWKZ81fcIe",
+    "kofi_username": "fedpromptly",
+    "buy_me_a_coffee_username": "fedpromptly"
+  },
+  "age_gate": {
+    "threshold": 18,
+    "scope": "payment options only",
+    "storage": "sessionStorage boolean; date of birth is not persisted or transmitted",
+    "limitation": "client-side age check is not identity verification"
+  }
+}
