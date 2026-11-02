@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects — Still Water Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+
+  :root {
+    --ink: #dfe6f0;
+    --muted: rgba(190, 205, 230, .44);
+    --accent: 130, 180, 240;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    background: #060810;
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(1200px 800px at 50% -10%, rgba(60, 100, 170, .16), transparent 62%),
+      radial-gradient(900px 700px at 50% 110%, rgba(40, 120, 160, .10), transparent 62%),
+      radial-gradient(700px 500px at 10% 30%, rgba(80, 90, 180, .07), transparent 68%),
+      radial-gradient(700px 500px at 90% 70%, rgba(60, 150, 200, .06), transparent 68%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 50; pointer-events: none;
+    opacity: .09; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- header ---------- */
+  .bar {
+    position: relative; z-index: 3;
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 22px clamp(18px, 3.4vw, 42px) 12px;
+  }
+  .brand {
+    font-size: 11.5px; font-weight: 600;
+    letter-spacing: .46em; text-indent: .46em;
+    text-transform: uppercase;
+    color: #cfd8e6;
+    white-space: nowrap;
+  }
+  .brand span { color: rgb(var(--accent)); margin: 0 .14em; }
+  .hint {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .bar { flex-wrap: wrap; }
+  .gallery-tabs {
+    display: flex;
+    flex: 1 0 100%;
+    order: 3;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .gallery-tabs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 7px 10px;
+    border: 1px solid rgba(130, 180, 240, .2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .04);
+    color: rgba(220, 228, 244, .7);
+    font: inherit;
+    font-size: 8px;
+    letter-spacing: .12em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background .25s, border-color .25s, color .25s;
+  }
+  .gallery-tabs a:hover {
+    background: rgba(130, 180, 240, .1);
+    border-color: rgba(130, 180, 240, .4);
+    color: #eef2fa;
+  }
+  .gallery-tabs a[aria-current="page"] {
+    background: rgba(130, 180, 240, .16);
+    border-color: rgba(130, 180, 240, .48);
+    color: #eef2fa;
+  }
+  .gallery-tabs a:focus-visible {
+    outline: 2px solid rgba(130, 180, 240, .85);
+    outline-offset: 3px;
+  }
+
+  /* ---------- lake (scroll container) ---------- */
+  .lake {
+    position: relative; z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(130, 160, 210, .18) transparent;
+    scroll-behavior: smooth;
+    animation: fadeIn 1.4s ease both;
+  }
+  .lake::-webkit-scrollbar { width: 8px; }
+  .lake::-webkit-scrollbar-track { background: transparent; }
+  .lake::-webkit-scrollbar-thumb {
+    background: rgba(130, 160, 210, .15);
+    border-radius: 4px;
+  }
+  .lake::-webkit-scrollbar-thumb:hover { background: rgba(130, 160, 210, .3); }
+
+  @keyframes fadeIn { from { opacity: 0; } }
+
+  /* ---------- intro ---------- */
+  .intro {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: clamp(30px, 7vh, 80px) 24px clamp(60px, 10vh, 120px);
+    text-align: center;
+  }
+  .intro-label {
+    display: block;
+    font-size: 9.5px;
+    letter-spacing: .4em;
+    text-indent: .4em;
+    text-transform: uppercase;
+    color: rgba(var(--accent), .7);
+    margin-bottom: 26px;
+  }
+  .intro h1 {
+    margin: 0 0 22px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(34px, 6vw, 60px);
+    line-height: 1;
+    letter-spacing: -.02em;
+    color: #f0f4fb;
+  }
+  .intro p {
+    margin: 0 auto;
+    max-width: 400px;
+    font-size: clamp(13px, 1.2vw, 15px);
+    line-height: 1.6;
+    color: rgba(200, 212, 232, .6);
+  }
+  .intro-rule {
+    width: 40px;
+    height: 1px;
+    margin: 40px auto 0;
+    background: linear-gradient(90deg,
+      transparent, rgba(var(--accent), .55), transparent);
+    animation: breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: .5; transform: scaleX(.85); }
+    50% { opacity: 1; transform: scaleX(1); }
+  }
+
+  /* ---------- stream (items) ---------- */
+  .stream {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+    gap: 0;
+  }
+
+  .item {
+    position: relative;
+    width: min(600px, 88vw);
+    margin-bottom: clamp(70px, 12vh, 140px);
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 1.2s cubic-bezier(.22, 1, .36, 1),
+      transform 1.2s cubic-bezier(.22, 1, .36, 1);
+    contain: layout style paint;
+  }
+  .item.in { opacity: 1; transform: none; }
+
+  /* gentle floating motion, staggered per item */
+  .item-inner {
+    animation: float 10s ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+    will-change: transform;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    33%      { transform: translateY(-5px) translateX(1px); }
+    66%      { transform: translateY(-2px) translateX(-1px); }
+  }
+
+  /* ---------- photo ---------- */
+  .photo {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #0a0e16;
+    box-shadow:
+      0 20px 44px -18px rgba(0, 0, 0, .85),
+      0 0 0 1px rgba(255, 255, 255, .04) inset;
+    cursor: zoom-in;
+    transition: box-shadow .55s ease;
+    outline: none;
+  }
+  .photo:focus-visible {
+    outline: 2px solid rgba(var(--accent), .8);
+    outline-offset: 4px;
+  }
+  .item:hover .photo {
+    box-shadow:
+      0 30px 60px -20px rgba(0, 0, 0, .92),
+      0 0 0 1px rgba(var(--accent), .18) inset,
+      0 0 50px rgba(var(--accent), .12);
+  }
+
+  .photo img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    transition: transform 1.4s cubic-bezier(.22, 1, .36, 1);
+  }
+  .item:hover .photo img { transform: scale(1.02); }
+
+  /* ---------- reflection ---------- */
+  .reflection {
+    position: relative;
+    height: clamp(150px, 38%, 230px);
+    height: 200px;
+    overflow: hidden;
+    margin-top: 5px;
+    border-radius: 0 0 4px 4px;
+    -webkit-mask-image: linear-gradient(to bottom,
+      rgba(0,0,0,.95) 0%,
+      rgba(0,0,0,.7) 26%,
+      rgba(0,0,0,.42) 52%,
+      rgba(0,0,0,.16) 76%,
+      rgba(0,0,0,.03) 92%,
+      transparent 100%);
+    mask-image: linear-gradient(to bottom,
+      rgba(0,0,0,.95) 0%,
+      rgba(0,0,0,.7) 26%,
+      rgba(0,0,0,.42) 52%,
+      rgba(0,0,0,.16) 76%,
+      rgba(0,0,0,.03) 92%,
+      transparent 100%);
+    filter: url(#water);
+    pointer-events: none;
+  }
+
+  .reflection img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+    transform: scaleY(-1);
+    filter: blur(1.4px) brightness(.45) saturate(.68);
+    transition: filter .55s ease;
+  }
+  .item:hover .reflection img {
+    filter: blur(1.1px) brightness(.55) saturate(.82);
+  }
+
+  @media (max-width: 700px) {
+    .reflection { height: 150px; filter: none; }
+    .reflection img {
+      filter: blur(1.2px) brightness(.42) saturate(.62);
+    }
+  }
+
+  /* ---------- end marker ---------- */
+  .end {
+    position: relative;
+    text-align: center;
+    padding: 40px 20px 120px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: .3em;
+    color: rgba(180, 200, 230, .28);
+  }
+
+  /* ---------- scroll hint ---------- */
+  .scroll-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 8.5px;
+    letter-spacing: .4em;
+    text-transform: uppercase;
+    color: rgba(180, 200, 230, .4);
+    pointer-events: none;
+    transition: opacity .8s ease;
+    z-index: 4;
+  }
+  .scroll-hint.hidden { opacity: 0; }
+  .scroll-hint span { text-indent: .4em; }
+  .scroll-hint svg {
+    width: 10px; height: 16px;
+    animation: drift 2.4s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0); opacity: .5; }
+    50%      { transform: translateY(5px); opacity: 1; }
+  }
+
+  /* ---------- lightbox ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 70;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(16px, 4vw, 54px);
+    background: rgba(4, 6, 10, .94);
+    -webkit-backdrop-filter: blur(20px) saturate(.9);
+    backdrop-filter: blur(20px) saturate(.9);
+    opacity: 0; visibility: hidden;
+    transition: opacity .45s ease, visibility .45s ease;
+  }
+  .lb.open { opacity: 1; visibility: visible; }
+
+  .lb-fig {
+    margin: 0;
+    display: flex; flex-direction: column; gap: 15px;
+    max-width: min(1100px, 94vw);
+    transform: scale(.95) translateY(10px);
+    transition: transform .6s cubic-bezier(.22, 1, .36, 1);
+  }
+  .lb.open .lb-fig { transform: none; }
+
+  .lb-fig img {
+    display: block;
+    max-width: 100%;
+    max-height: 74vh;
+    width: auto; height: auto;
+    margin: 0 auto;
+    border-radius: 6px;
+    background: #0a0e16;
+    box-shadow: 0 46px 110px -30px #000;
+  }
+
+  .lb-fig h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(18px, 2vw, 24px);
+    text-align: center;
+    color: #f0f4fb;
+  }
+  .lb-meta {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(var(--accent), .7);
+  }
+
+  .lb-btn {
+    position: absolute;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    font-size: 17px;
+    line-height: 1;
+    color: #e0e7f2;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background .25s, border-color .25s, transform .25s;
+  }
+  .lb-btn:hover { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .3); }
+  .lb-btn:active { transform: scale(.92); }
+  .lb-btn:focus-visible { outline: 2px solid rgba(var(--accent), .9); outline-offset: 3px; }
+
+  .lb-x { top: clamp(14px, 3vw, 28px); right: clamp(14px, 3vw, 28px); }
+  .lb-prev { left: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+  .lb-next { right: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+
+  @media (max-width: 620px) {
+    .hint { display: none; }
+    .brand { font-size: 10px; letter-spacing: .36em; }
+    .lb-prev, .lb-next { display: none; }
+    .scroll-hint { bottom: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lake, .item, .item-inner, .photo img, .reflection img,
+    .lb, .lb-fig, .lb-btn, .intro-rule, .scroll-hint svg {
+      animation: none !important;
+      transition-duration: .01ms !important;
+    }
+    .item { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- SVG filter for water ripple -->
+  <svg width="0" height="0" style="position:absolute;left:-9999px" aria-hidden="true">
+    <defs>
+      <filter id="water" x="-8%" y="-8%" width="116%" height="116%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.035"
+                      numOctaves="2" seed="7" result="n">
+          <animate attributeName="baseFrequency" dur="20s"
+                   values="0.008 0.035;0.014 0.052;0.008 0.035"
+                   repeatCount="indefinite"/>
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.5"
+                           xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">Reflections<span>·</span>Still Water</div>
+    <p class="hint">Scroll &nbsp;·&nbsp; Click to enlarge</p>
+    <nav class="gallery-tabs" aria-label="Gallery pages">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html">Orbital</a>
+      <a href="memories.html">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html">Deck</a>
+      <a href="profile.html">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+      <a href="corridor.html">Corridor</a>
+      <a href="exclusives.html">Exclusives</a>
+      <a href="projects.html" aria-current="page">Projects</a>
+    </nav>
+  </header>
+
+  <main class="lake" id="lake">
+    <section class="intro">
+      <span class="intro-label">Chapter One</span>
+      <h1>Still Water</h1>
+      <p>Quiet moments from lakesides, dusk light, and the hush after rain.</p>
+      <div class="intro-rule" aria-hidden="true"></div>
+    </section>
+
+    <div class="stream" id="stream"></div>
+
+    <div class="end" aria-hidden="true"><span>— fin —</span></div>
+
+    <div class="scroll-hint" id="scrollHint" aria-hidden="true">
+      <span>Scroll</span>
+      <svg viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M5 1v13M1 10l4 4 4-4"/>
+      </svg>
+    </div>
+  </main>
+
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Photo viewer">
+    <button class="lb-btn lb-x" id="lbX" type="button" aria-label="Close viewer">✕</button>
+    <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="Previous photo">‹</button>
+    <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="Next photo">›</button>
+    <figure class="lb-fig">
+      <img id="lbImg" alt="">
+      <figcaption>
+        <h2 id="lbTitle"></h2>
+        <p class="lb-meta" id="lbMeta"></p>
+      </figcaption>
+    </figure>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Collection
+  ------------------------------------------------------------------ */
+  const ITEMS = [
+    { seed:'refl-aurora',  title:'Aurora Fields',  place:'Iceland',   year:2023 },
+    { seed:'refl-salt',    title:'Salt Horizon',   place:'Uyuni',     year:2022 },
+    { seed:'refl-market',  title:'Night Market',   place:'Taipei',    year:2024 },
+    { seed:'refl-pine',    title:'Pine Ridge',     place:'Oregon',    year:2021 },
+    { seed:'refl-azulejo', title:'Blue Corridor',  place:'Lisbon',    year:2023 },
+    { seed:'refl-rain',    title:'Terrace Rain',   place:'Kyoto',     year:2022 },
+    { seed:'refl-dune',    title:'Dune Lines',     place:'Merzouga',  year:2020 },
+    { seed:'refl-lobby',   title:'Glass Lobby',    place:'Rotterdam', year:2024 },
+    { seed:'refl-tide',    title:'Low Tide',       place:'Normandy',  year:2021 },
+    { seed:'refl-ferry',   title:'Last Ferry',     place:'Bergen',    year:2020 }
+  ];
+
+  const N = ITEMS.length;
+  const thumb = s => `https://picsum.photos/seed/${s}/1200/800`;
+  const full  = s => `https://picsum.photos/seed/${s}/1800/1200`;
+
+  /* ------------------------------------------------------------------
+     DOM
+  ------------------------------------------------------------------ */
+  const lake       = document.getElementById('lake');
+  const stream     = document.getElementById('stream');
+  const scrollHint = document.getElementById('scrollHint');
+
+  const lb      = document.getElementById('lb');
+  const lbImg   = document.getElementById('lbImg');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbMeta  = document.getElementById('lbMeta');
+  const lbX     = document.getElementById('lbX');
+  const lbPrev  = document.getElementById('lbPrev');
+  const lbNext  = document.getElementById('lbNext');
+
+  /* ------------------------------------------------------------------
+     Build the stream
+  ------------------------------------------------------------------ */
+  const items = [];
+
+  ITEMS.forEach((data, i) => {
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.style.setProperty('--delay', ((i * 1.3) % 8).toFixed(2) + 's');
+    item.dataset.index = i;
+
+    const inner = document.createElement('div');
+    inner.className = 'item-inner';
+
+    const photo = document.createElement('div');
+    photo.className = 'photo';
+    photo.setAttribute('role', 'button');
+    photo.setAttribute('tabindex', '0');
+    photo.setAttribute('aria-label', `${data.title}, ${data.place}, ${data.year}`);
+
+    const pImg = new Image();
+    pImg.alt = data.title;
+    pImg.decoding = 'async';
+    pImg.loading = i < 2 ? 'eager' : 'lazy';
+    pImg.draggable = false;
+    pImg.src = thumb(data.seed);
+    photo.appendChild(pImg);
+
+    const reflection = document.createElement('div');
+    reflection.className = 'reflection';
+    reflection.setAttribute('aria-hidden', 'true');
+
+    const rImg = new Image();
+    rImg.alt = '';
+    rImg.decoding = 'async';
+    rImg.loading = 'lazy';
+    rImg.draggable = false;
+    rImg.src = thumb(data.seed);
+    reflection.appendChild(rImg);
+
+    inner.append(photo, reflection);
+    item.appendChild(inner);
+    stream.appendChild(item);
+    items.push({ el: item, photo, data, idx: i });
+
+    /* interactions */
+    photo.addEventListener('click', () => openLightbox(i));
+    photo.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(i);
+      }
+    });
+  });
+
+  /* ------------------------------------------------------------------
+     Scroll reveal
+  ------------------------------------------------------------------ */
+  function reveal() {
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(it => it.el.classList.add('in'));
+      return;
+    }
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: lake,
+      threshold: 0.12,
+      rootMargin: '0px 0px -6% 0px'
+    });
+
+    items.forEach((it, i) => {
+      /* stagger the first couple that are already on screen */
+      if (i < 2) {
+        window.setTimeout(() => it.el.classList.add('in'), 350 + i * 250);
+        io.unobserve(it.el);
+      } else {
+        io.observe(it.el);
+      }
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     Scroll hint fade
+  ------------------------------------------------------------------ */
+  function hint() {
+    let hidden = false;
+    lake.addEventListener('scroll', () => {
+      if (!hidden && lake.scrollTop > 40) {
+        hidden = true;
+        scrollHint.classList.add('hidden');
+      }
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------------------------------
+     Lightbox
+  ------------------------------------------------------------------ */
+  let lbIndex = -1;
+
+  function openLightbox(i) {
+    lbIndex = i;
+    const it = ITEMS[i];
+
+    lbImg.src = full(it.seed);
+    lbImg.alt = it.title;
+    lbTitle.textContent = it.title;
+    lbMeta.textContent = `${it.place} · ${it.year}`;
+
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lock');
+    lbX.focus({ preventScroll: true });
+  }
+
+  function closeLightbox() {
+    if (lbIndex === -1) return;
+    lbIndex = -1;
+
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lock');
+
+    window.setTimeout(() => {
+      if (lbIndex === -1) lbImg.removeAttribute('src');
+    }, 470);
+  }
+
+  function step(dir) {
+    if (lbIndex === -1) return;
+    openLightbox((lbIndex + dir + N) % N);
+  }
+
+  lbX.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => step(-1));
+  lbNext.addEventListener('click', () => step(1));
+  lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+
+  window.addEventListener('keydown', (e) => {
+    if (lbIndex === -1) return;
+    if (e.key === 'Escape')     { e.preventDefault(); closeLightbox(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); step(-1); }
+  });
+
+  /* ------------------------------------------------------------------
+     Boot
+  ------------------------------------------------------------------ */
+  reveal();
+  hint();
+
+  /* touch wording */
+  if (window.matchMedia('(hover: none)').matches) {
+    const hintEl = document.querySelector('.hint');
+    if (hintEl) hintEl.textContent = 'Scroll · Tap to enlarge';
+  }
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magnetic — Profile</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { min-height: 100%; margin: 0; }
+
+  :root {
+    --bg: #08090d;
+    --ink: #e9edf7;
+    --muted: rgba(205, 216, 240, .44);
+    --accent: 125, 227, 195;
+    --line: rgba(255, 255, 255, .09);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body.lock { overflow: hidden; }
+
+  /* ---------- ambient ---------- */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 640px at 14% -8%, rgba(110, 160, 255, .13), transparent 62%),
+      radial-gradient(820px 700px at 92% 104%, rgba(110, 240, 205, .09), transparent 62%),
+      radial-gradient(700px 520px at 52% 46%, rgba(170, 130, 255, .05), transparent 68%),
+      linear-gradient(168deg, #101420 0%, #08090d 58%, #0a0c11 100%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 60; pointer-events: none;
+    opacity: .13; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .cursor-glow {
+    position: fixed; left: 0; top: 0; z-index: 1;
+    width: 620px; height: 620px; margin: -310px 0 0 -310px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle,
+      rgba(125, 227, 195, .075) 0%,
+      rgba(110, 160, 255, .05) 42%,
+      rgba(110, 160, 255, 0) 70%);
+    transition: opacity .7s ease;
+    will-change: transform;
+  }
+  body.live .cursor-glow { opacity: 1; }
+  body.touch .cursor-glow { display: none; }
+
+  /* ---------- header ---------- */
+  .bar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 20px clamp(16px, 3.4vw, 42px) 28px;
+    background: linear-gradient(180deg,
+      rgba(8, 9, 13, .97) 0%,
+      rgba(8, 9, 13, .82) 56%,
+      rgba(8, 9, 13, 0) 100%);
+  }
+
+  .brand {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .44em; text-indent: .44em;
+    text-transform: uppercase;
+    color: #dde4f4;
+    white-space: nowrap;
+  }
+  .brand span { color: rgb(var(--accent)); margin: 0 .14em; }
+
+  .hint {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: opacity .6s ease;
+  }
+  .hint.dim { opacity: .25; }
+
+  /* ---------- grid ---------- */
+  .wrap {
+    position: relative; z-index: 2;
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 0 clamp(14px, 3.4vw, 42px) clamp(70px, 10vh, 130px);
+  }
+
+  .grid {
+    position: relative;
+    display: grid;
+    grid-auto-flow: dense;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(118px, 14vw, 178px), 1fr));
+    grid-auto-rows: clamp(96px, 11.4vw, 142px);
+    gap: clamp(8px, 1vw, 13px);
+  }
+
+  .w2 { grid-column: span 2; }
+  .h2 { grid-row: span 2; }
+
+  /* ---------- tile ---------- */
+  .tile {
+    position: relative;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #0e1118;
+    cursor: pointer;
+    outline: 1px solid transparent;
+    outline-offset: -1px;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    box-shadow: 0 10px 26px -16px rgba(0, 0, 0, .9);
+    transition:
+      box-shadow .45s ease,
+      outline-color .35s ease;
+    animation: pop .8s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translate3d(0, 14px, 0) scale(.96); }
+  }
+
+  .tile img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    filter: saturate(.92) brightness(.86);
+    transition: filter .5s ease;
+  }
+
+  /* brightening veil driven by JS proximity */
+  .sheen {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, .26), transparent 72%),
+      linear-gradient(180deg, rgba(255, 255, 255, .05), transparent 55%);
+    transition: opacity .18s linear;
+  }
+
+  .tile.hot {
+    outline-color: rgba(var(--accent), .42);
+    box-shadow:
+      0 26px 58px -20px rgba(0, 0, 0, .95),
+      0 0 0 1px rgba(var(--accent), .22),
+      0 0 46px rgba(var(--accent), .13);
+  }
+  .tile.hot img { filter: saturate(1.06) brightness(1); }
+
+  /* caption */
+  .cap {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 34px 13px 12px;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(6, 8, 12, .88));
+    opacity: 0;
+    transform: translateY(9px);
+    transition: opacity .35s ease, transform .45s cubic-bezier(.22, 1, .36, 1);
+  }
+  .tile.hot .cap,
+  .tile:focus-visible .cap { opacity: 1; transform: none; }
+
+  .cap b {
+    display: block;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(12px, 1.05vw, 15px);
+    line-height: 1.2;
+    color: #f2f5fb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cap i {
+    display: block;
+    margin-top: 4px;
+    font-style: normal;
+    font-size: 8.5px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: rgba(var(--accent), .82);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tile:focus-visible { outline: 2px solid rgba(var(--accent), .8); outline-offset: 3px; }
+
+  /* ---------- lightbox ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 70;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(16px, 4vw, 54px);
+    background: rgba(5, 6, 9, .9);
+    -webkit-backdrop-filter: blur(18px) saturate(.9);
+    backdrop-filter: blur(18px) saturate(.9);
+    opacity: 0; visibility: hidden;
+    transition: opacity .45s ease, visibility .45s ease;
+  }
+  .lb.open { opacity: 1; visibility: visible; }
+
+  .lb-fig {
+    margin: 0;
+    display: flex; flex-direction: column; gap: 15px;
+    max-width: min(1080px, 94vw);
+    transform: scale(.95) translateY(10px);
+    transition: transform .6s cubic-bezier(.22, 1, .36, 1);
+  }
+  .lb.open .lb-fig { transform: none; }
+
+  .lb-fig img {
+    display: block;
+    max-width: 100%;
+    max-height: 72vh;
+    width: auto; height: auto;
+    margin: 0 auto;
+    border-radius: 10px;
+    background: #0e1118;
+    box-shadow: 0 42px 100px -30px #000;
+  }
+
+  .lb-fig h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(18px, 2vw, 24px);
+    text-align: center;
+    color: #f2f5fb;
+  }
+  .lb-meta {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(var(--accent), .7);
+  }
+
+  .lb-btn {
+    position: absolute;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    font-size: 17px;
+    line-height: 1;
+    color: #e6ebf7;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background .25s, border-color .25s, transform .25s;
+  }
+  .lb-btn:hover { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .28); }
+  .lb-btn:active { transform: scale(.92); }
+  .lb-btn:focus-visible { outline: 2px solid rgba(var(--accent), .85); outline-offset: 3px; }
+
+  .lb-x { top: clamp(14px, 3vw, 28px); right: clamp(14px, 3vw, 28px); }
+  .lb-prev { left: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+  .lb-next { right: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 760px) {
+    .hint { display: none; }
+    .brand { font-size: 10.5px; letter-spacing: .34em; }
+  }
+  @media (max-width: 640px) {
+    .w2, .h2 { grid-column: span 1; grid-row: span 1; }
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      grid-auto-rows: 112px;
+    }
+    .cap { padding: 26px 10px 10px; }
+    .lb-prev, .lb-next { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile { animation: none; }
+    .tile, .cap, .sheen, .lb, .lb-fig, .lb-btn, .cursor-glow {
+      transition-duration: .01ms !important;
+    }
+  }
+
+  /* ---------- profile page tabs ---------- */
+  .bar { flex-wrap: wrap; }
+  .gallery-tabs {
+    display: flex; flex: 1 1 auto; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 6px;
+  }
+  .gallery-tabs a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 34px; padding: 7px 10px;
+    border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+    background: rgba(255,255,255,.04); color: rgba(220,228,244,.7);
+    font-size: 8.5px; letter-spacing: .14em; text-decoration: none;
+    text-transform: uppercase; transition: background .25s, border-color .25s, color .25s;
+  }
+  .gallery-tabs a:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.28); color: #eef2fa; }
+  .gallery-tabs a[aria-current="page"] { background: rgba(125,227,195,.14); border-color: rgba(125,227,195,.45); color: #f2f5fb; }
+  .gallery-tabs a:focus-visible { outline: 2px solid rgba(125,227,195,.8); outline-offset: 3px; }
+  .profile-intro { margin: 0 0 clamp(18px,3vw,30px); padding: 0 2px; }
+  .profile-intro .eyebrow { margin: 0 0 8px; color: rgba(var(--accent),.78); font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }
+  .profile-intro h1 { margin: 0; color: #f2f5fb; font: 400 clamp(25px,4vw,42px)/1.08 Georgia,"Times New Roman",serif; }
+  .profile-intro p { max-width: 560px; margin: 10px 0 0; color: rgba(205,216,240,.62); font-size: 13px; line-height: 1.55; }
+  @media (max-width: 760px) {
+    .gallery-tabs { order: 3; flex: 1 0 100%; gap: 5px; }
+    .gallery-tabs a { min-height: 31px; padding: 6px 9px; font-size: 7.5px; }
+  }
+
+  /* Keep the complete page navigation accessible on narrow screens. */
+  .gallery-tabs { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor-glow" id="glow" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">Magnetic<span>·</span>Field</div>
+    <nav class="gallery-tabs" aria-label="Gallery pages">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html">Orbital</a>
+      <a href="memories.html">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html">Deck</a>
+      <a href="profile.html" aria-current="page">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+          <a href="corridor.html">Corridor</a>
+     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+    <p class="hint" id="hint">Move to attract &nbsp;·&nbsp; Click to open</p>
+  </header>
+
+  <main class="wrap">
+    <section class="profile-intro" aria-labelledby="profile-title">
+      <p class="eyebrow">Profile</p>
+      <h1 id="profile-title">Recommended images</h1>
+      <p>A selection of images to explore. These are recommendations, not your posts.</p>
+    </section>
+    <div class="grid" id="grid" aria-label="Recommended images"></div>
+  </main>
+
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Photo viewer">
+    <button class="lb-btn lb-x" id="lbX" type="button" aria-label="Close viewer">✕</button>
+    <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="Previous photo">‹</button>
+    <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="Next photo">›</button>
+    <figure class="lb-fig">
+      <img id="lbImg" alt="">
+      <figcaption>
+        <h2 id="lbTitle"></h2>
+        <p class="lb-meta" id="lbMeta"></p>
+      </figcaption>
+    </figure>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Collection — [seed, title, place, year, size]
+     size: '' | 'w' | 'h' | 'wh'
+  ------------------------------------------------------------------ */
+  const ITEMS = [
+    { seed:'mag-aurora',  title:'Aurora Field',   place:'Iceland',   year:2023, size:'wh' },
+    { seed:'mag-salt',    title:'Salt Horizon',   place:'Uyuni',     year:2022, size:''   },
+    { seed:'mag-market',  title:'Night Market',   place:'Taipei',    year:2024, size:'h'  },
+    { seed:'mag-pine',    title:'Pine Ridge',     place:'Oregon',    year:2021, size:''   },
+    { seed:'mag-azulejo', title:'Blue Corridor',  place:'Lisbon',    year:2023, size:''   },
+    { seed:'mag-rain',    title:'Terrace Rain',   place:'Kyoto',     year:2022, size:'w'  },
+    { seed:'mag-dune',    title:'Dune Lines',     place:'Merzouga',  year:2020, size:''   },
+    { seed:'mag-lobby',   title:'Glass Lobby',    place:'Rotterdam', year:2024, size:''   },
+    { seed:'mag-tide',    title:'Low Tide',       place:'Normandy',  year:2021, size:'h'  },
+    { seed:'mag-steam',   title:'Steam & Neon',   place:'Osaka',     year:2023, size:''   },
+    { seed:'mag-white',   title:'White Room',     place:'Berlin',    year:2022, size:'wh' },
+    { seed:'mag-ferry',   title:'Last Ferry',     place:'Bergen',    year:2020, size:''   },
+    { seed:'mag-canyon',  title:'Red Canyon',     place:'Utah',      year:2019, size:''   },
+    { seed:'mag-tower',   title:'Radio Tower',    place:'Riga',      year:2021, size:'w'  },
+    { seed:'mag-quiet',   title:'Quiet Street',   place:'Porto',     year:2023, size:''   }
+  ];
+
+  const N = ITEMS.length;
+  const thumb = s => `https://picsum.photos/seed/${s}/640/640`;
+  const full  = s => `https://picsum.photos/seed/${s}/1500/1100`;
+
+  /* ------------------------------------------------------------------
+     DOM
+  ------------------------------------------------------------------ */
+  const grid  = document.getElementById('grid');
+  const glow  = document.getElementById('glow');
+  const hint  = document.getElementById('hint');
+
+  const lb      = document.getElementById('lb');
+  const lbImg   = document.getElementById('lbImg');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbMeta  = document.getElementById('lbMeta');
+  const lbX     = document.getElementById('lbX');
+  const lbPrev  = document.getElementById('lbPrev');
+  const lbNext  = document.getElementById('lbNext');
+
+  /* ------------------------------------------------------------------
+     Device capability
+  ------------------------------------------------------------------ */
+  const noHover = window.matchMedia('(hover: none)').matches;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const magnetic = !noHover && !reduced;
+
+  if (noHover) document.body.classList.add('touch');
+  if (noHover) hint.textContent = 'Tap to open';
+
+  /* ------------------------------------------------------------------
+     Build the mosaic
+  ------------------------------------------------------------------ */
+  const tiles = [];
+
+  ITEMS.forEach((item, i) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'tile' +
+      (item.size.includes('w') ? ' w2' : '') +
+      (item.size.includes('h') ? ' h2' : '');
+    el.style.animationDelay = (i * 55) + 'ms';
+    el.setAttribute('aria-label', `${item.title}, ${item.place}, ${item.year}`);
+    el.dataset.index = i;
+
+    const img = new Image();
+    img.alt = item.title;
+    img.decoding = 'async';
+    img.src = thumb(item.seed);
+
+    const sheen = document.createElement('div');
+    sheen.className = 'sheen';
+
+    const cap = document.createElement('div');
+    cap.className = 'cap';
+    cap.innerHTML = `<b>${item.title}</b><i>${item.place} · ${item.year}</i>`;
+
+    el.append(img, sheen, cap);
+    el.addEventListener('click', () => openLightbox(i));
+
+    grid.appendChild(el);
+    tiles.push({ el, sheen, i, ox: 0, oy: 0, t: 0, hot: false });
+  });
+
+  /* ------------------------------------------------------------------
+     Magnetic field
+  ------------------------------------------------------------------ */
+  let gridRect = null;
+  let pointerX = -99999;
+  let pointerY = -99999;
+  let rafId = 0;
+  let RADIUS = 300;
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+  function measure() {
+    gridRect = grid.getBoundingClientRect();
+    const w = gridRect.width;
+    RADIUS = clamp(w * 0.30, 190, 360);
+
+    for (const t of tiles) {
+      // offsetLeft/Top are unaffected by transforms, so this stays stable
+      t.ox = t.el.offsetLeft + t.el.offsetWidth  / 2;
+      t.oy = t.el.offsetTop  + t.el.offsetHeight / 2;
+    }
+  }
+
+  function frame() {
+    rafId = 0;
+
+    if (!gridRect) measure();
+    const gx = gridRect.left;
+    const gy = gridRect.top;
+
+    let moving = false;
+    let hotIdx = -1;
+    let hotT = 0;
+
+    for (const t of tiles) {
+      const dx = pointerX - gx - t.ox;
+      const dy = pointerY - gy - t.oy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      let target = 0;
+      if (dist < RADIUS) {
+        const k = 1 - dist / RADIUS;
+        target = k * k;
+      }
+
+      if (target > hotT) { hotT = target; hotIdx = t.i; }
+
+      // eased pursuit of the target field strength
+      t.t += (target - t.t) * 0.17;
+      if (t.t < 0.0008) t.t = 0;
+      if (Math.abs(target - t.t) > 0.0012) moving = true;
+
+      const a = t.t;
+      if (a > 0.0005 || t.wasActive) {
+        const pull = a * a;
+        const tx = dx * 0.20 * pull;
+        const ty = dy * 0.20 * pull;
+        const sc = 1 + a * 0.055;
+        const rz = (dx / RADIUS) * a * 2.4;
+
+        t.el.style.transform =
+          `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) ` +
+          `rotate(${rz.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
+
+        t.sheen.style.opacity = (a * 0.9).toFixed(3);
+        t.wasActive = a > 0.0005;
+      }
+    }
+
+    // designate the single hottest frame
+    const hot = hotT > 0.34 ? hotIdx : -1;
+    for (const t of tiles) {
+      const isHot = t.i === hot;
+      if (isHot !== t.hot) {
+        t.hot = isHot;
+        t.el.classList.toggle('hot', isHot);
+      }
+    }
+
+    if (moving) start();
+  }
+
+  function start() {
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  }
+
+  /* ------------------------------------------------------------------
+     Pointer plumbing
+  ------------------------------------------------------------------ */
+  function onPointerMove(e) {
+    pointerX = e.clientX;
+    pointerY = e.clientY;
+
+    if (!document.body.classList.contains('live')) {
+      document.body.classList.add('live');
+      hint.classList.add('dim');
+    }
+
+    glow.style.transform =
+      `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+
+    if (magnetic) start();
+  }
+
+  function onPointerLeave() {
+    pointerX = -99999;
+    pointerY = -99999;
+    document.body.classList.remove('live');
+    if (magnetic) start();
+  }
+
+  if (magnetic) {
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerdown', onPointerMove, { passive: true });
+    document.addEventListener('pointerleave', onPointerLeave);
+    window.addEventListener('blur', onPointerLeave);
+
+    window.addEventListener('scroll', () => {
+      gridRect = grid.getBoundingClientRect();
+      start();
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------------------------------
+     Measure & remeasure
+  ------------------------------------------------------------------ */
+  function boot() {
+    measure();
+    // re-measure once images have settled the layout
+    window.setTimeout(measure, 400);
+    window.setTimeout(measure, 1200);
+  }
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      for (const t of tiles) {
+        t.t = 0;
+        t.wasActive = false;
+        t.el.style.transform = '';
+        t.sheen.style.opacity = '0';
+      }
+      measure();
+      if (magnetic && pointerX > -9999) start();
+    }, 140);
+  });
+
+  /* ------------------------------------------------------------------
+     Lightbox
+  ------------------------------------------------------------------ */
+  let lbIndex = -1;
+
+  function openLightbox(i) {
+    lbIndex = i;
+    const it = ITEMS[i];
+
+    lbImg.src = full(it.seed);
+    lbImg.alt = it.title;
+    lbTitle.textContent = it.title;
+    lbMeta.textContent = `${it.place} · ${it.year}`;
+
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lock');
+    lbX.focus({ preventScroll: true });
+  }
+
+  function closeLightbox() {
+    if (lbIndex === -1) return;
+    lbIndex = -1;
+
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lock');
+
+    window.setTimeout(() => {
+      if (lbIndex === -1) lbImg.removeAttribute('src');
+    }, 470);
+  }
+
+  function step(dir) {
+    if (lbIndex === -1) return;
+    openLightbox((lbIndex + dir + N) % N);
+  }
+
+  lbX.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => step(-1));
+  lbNext.addEventListener('click', () => step(1));
+
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb) closeLightbox();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (lbIndex === -1) return;
+    if (e.key === 'Escape')     { e.preventDefault(); closeLightbox(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); step(-1); }
+  });
+
+  /* ------------------------------------------------------------------
+     Go
+  ------------------------------------------------------------------ */
+  boot();
+
+  // intro spark: nudge the field once so the wall announces itself
+  if (magnetic) {
+    window.setTimeout(() => {
+      if (document.body.classList.contains('live')) return;
+      const r = grid.getBoundingClientRect();
+      pointerX = r.left + r.width * 0.5;
+      pointerY = r.top + Math.min(r.height * 0.42, window.innerHeight * 0.42);
+      glow.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+      document.body.classList.add('live');
+      measure();
+      start();
+
+      window.setTimeout(() => {
+        if (!document.body.classList.contains('live')) return;
+        // fade the intro field back down unless the user takes over
+        pointerX = -99999;
+        pointerY = -99999;
+        start();
+        document.body.classList.remove('live');
+        hint.classList.remove('dim');
+      }, 1500);
+    }, 700);
+  }
+
+})();
+</script>
+</body>
+</html>

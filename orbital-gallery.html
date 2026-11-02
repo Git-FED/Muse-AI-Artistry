@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbital — 3D Image Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background: #06060b;
+    color: #e9ecf5;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ambient light */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1200px 700px at 50% 30%, rgba(74, 96, 190, .22), transparent 62%),
+      radial-gradient(900px 620px at 50% 104%, rgba(190, 80, 150, .13), transparent 62%),
+      radial-gradient(700px 500px at 12% 70%, rgba(60, 190, 180, .07), transparent 65%);
+  }
+
+  /* ---------- header ---------- */
+  header {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    padding: clamp(20px, 4vh, 44px) 20px 0;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(11px, 1.05vw, 13px);
+    font-weight: 600;
+    letter-spacing: .58em;
+    text-indent: .58em;
+    text-transform: uppercase;
+    color: #cfd7f0;
+  }
+  header p {
+    margin: 12px 0 0;
+    font-size: clamp(9.5px, .82vw, 11.5px);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(198, 208, 240, .38);
+  }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position: relative;
+    z-index: 1;
+    perspective: 1500px;
+    perspective-origin: 50% 47%;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+  }
+  .stage:active { cursor: grabbing; }
+
+  .ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* ---------- cards ---------- */
+  .card {
+    --cw: clamp(118px, 15.5vw, 208px);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--cw);
+    height: calc(var(--cw) * 4 / 3);
+    margin-left: calc(var(--cw) / -2);
+    margin-top: calc(var(--cw) * -2 / 3);
+    transform-style: preserve-3d;
+    will-change: transform, visibility;
+  }
+
+  .inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #0d0d16;
+    box-shadow:
+      0 24px 55px -14px rgba(0, 0, 0, .95),
+      0 0 0 1px rgba(255, 255, 255, .07) inset;
+    will-change: filter, opacity;
+  }
+
+  .card.active .inner {
+    box-shadow:
+      0 26px 70px -12px rgba(0, 0, 0, .95),
+      0 0 0 1px rgba(150, 180, 255, .55) inset,
+      0 0 46px rgba(96, 132, 255, .28);
+  }
+
+  .inner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity .8s ease;
+    pointer-events: none;
+  }
+  .inner img.loaded { opacity: 1; }
+
+  /* ---------- caption ---------- */
+  .caption {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    padding: clamp(14px, 3vh, 34px) 20px clamp(20px, 4vh, 44px);
+  }
+  .cap-title {
+    font-size: clamp(11px, 1vw, 13px);
+    letter-spacing: .34em;
+    text-indent: .34em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 250, .82);
+  }
+  .cap-meta {
+    margin-top: 9px;
+    font-size: clamp(9px, .78vw, 10.5px);
+    letter-spacing: .28em;
+    color: rgba(170, 182, 220, .38);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* subtle vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(3, 3, 7, .75) 100%);
+  }
+
+
+  /* ---------- gallery page tabs ---------- */
+  .gallery-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 16px auto 0;
+  }
+  .gallery-tabs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 8px 15px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px;
+    background: rgba(255,255,255,.045);
+    color: rgba(218,226,250,.68);
+    font: inherit;
+    font-size: 9px;
+    letter-spacing: .16em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .gallery-tabs a:hover {
+    border-color: rgba(180,198,255,.45);
+    background: rgba(255,255,255,.1);
+    color: #f2f5ff;
+  }
+  .gallery-tabs a[aria-current="page"] {
+    border-color: rgba(150,180,255,.48);
+    background: rgba(96,132,255,.16);
+    color: #f2f5ff;
+  }
+  .gallery-tabs a:focus-visible {
+    outline: 2px solid rgba(150,170,255,.85);
+    outline-offset: 3px;
+  }
+  @media (max-width: 620px) {
+    .gallery-tabs { margin-top: 12px; gap: 6px; }
+    .gallery-tabs a { min-height: 32px; padding: 7px 12px; font-size: 8px; }
+  }
+
+  @media (max-width: 620px) {
+    .card { --cw: clamp(104px, 30vw, 150px); }
+    .stage { perspective: 1150px; }
+  }
+
+  /* Keep the complete page navigation accessible on narrow screens. */
+  .gallery-tabs { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>Orbital</h1>
+    <p>Drag to spin &nbsp;·&nbsp; Scroll to step &nbsp;·&nbsp; Click to focus</p>
+    <nav class="gallery-tabs" aria-label="Gallery pages">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html" aria-current="page">Orbital</a>
+      <a href="memories.html">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html">Deck</a>
+      <a href="profile.html">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+          <a href="corridor.html">Corridor</a>
+     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="ring" id="ring"></div>
+  </div>
+
+  <footer class="caption">
+    <div class="cap-title" id="capTitle">—</div>
+    <div class="cap-meta" id="capMeta">—</div>
+  </footer>
+
+  <div class="vignette"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Content
+  ------------------------------------------------------------------ */
+  const ITEMS = [
+    { title: "Event Horizon",  src: "https://picsum.photos/seed/nebula7/600/800"  },
+    { title: "Silver Coast",   src: "https://picsum.photos/seed/atlas22/600/800"  },
+    { title: "Neon Rain",      src: "https://picsum.photos/seed/neonrain/600/800" },
+    { title: "Paper Moon",     src: "https://picsum.photos/seed/papermoon/600/800"},
+    { title: "Cold Sun",       src: "https://picsum.photos/seed/coldsun9/600/800" },
+    { title: "Glass Forest",   src: "https://picsum.photos/seed/glassfr/600/800"  },
+    { title: "Night Transit",  src: "https://picsum.photos/seed/transit3/600/800" },
+    { title: "Quiet Static",   src: "https://picsum.photos/seed/static55/600/800" },
+    { title: "Amber Drift",    src: "https://picsum.photos/seed/amber12/600/800"  },
+    { title: "Deep Field",     src: "https://picsum.photos/seed/deepfield/600/800"}
+  ];
+
+  const stage   = document.getElementById("stage");
+  const ring    = document.getElementById("ring");
+  const capTitle= document.getElementById("capTitle");
+  const capMeta = document.getElementById("capMeta");
+
+  const N    = ITEMS.length;
+  const STEP = 360 / N;
+
+  const cards = [];
+
+  let radius     = 400;
+  let rot        = 0;
+  let velocity   = 0;
+  let targetRot  = null;
+  let frontIdx   = -1;
+
+  let dragging   = false;
+  let pointerId  = null;
+  let startX     = 0;
+  let lastX      = 0;
+  let startRot   = 0;
+  let moved      = 0;
+  let downCard   = null;
+
+  /* ------------------------------------------------------------------
+     Build the ring
+  ------------------------------------------------------------------ */
+  ITEMS.forEach((item, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const inner = document.createElement("div");
+    inner.className = "inner";
+    inner.style.background =
+      `linear-gradient(150deg,
+        hsl(${(i * 36 + 205) % 360} 42% 22%),
+        hsl(${(i * 36 + 265) % 360} 55% 9%))`;
+
+    const img = new Image();
+    img.alt = item.title;
+    img.decoding = "async";
+    img.draggable = false;
+    img.addEventListener("load", () => img.classList.add("loaded"));
+    img.addEventListener("error", () => img.remove());
+    img.src = item.src;
+    if (img.complete) img.classList.add("loaded");
+
+    inner.appendChild(img);
+    card.appendChild(inner);
+    ring.appendChild(card);
+    cards.push(card);
+  });
+
+  /* ------------------------------------------------------------------
+     Layout — compute the orbit radius from the real card width
+  ------------------------------------------------------------------ */
+  function layout() {
+    const cw = cards[0].offsetWidth || 180;
+    // chord between neighbours must exceed card width => no overlap
+    radius = (cw * 1.16) / (2 * Math.sin(Math.PI / N));
+
+    cards.forEach((card, i) => {
+      card.style.transform =
+        `rotateY(${i * STEP}deg) translateZ(${radius}px)`;
+    });
+
+    draw();
+  }
+
+  /* ------------------------------------------------------------------
+     Render one frame
+  ------------------------------------------------------------------ */
+  function draw() {
+    ring.style.transform =
+      `translateZ(${-radius}px) rotateY(${rot}deg)`;
+
+    let best = 0;
+    let bestAbs = Infinity;
+
+    for (let i = 0; i < N; i++) {
+      // effective angle of this card relative to the viewer (-180..180)
+      let a = (rot + i * STEP) % 360;
+      if (a > 180) a -= 360;
+      else if (a < -180) a += 360;
+
+      const abs    = Math.abs(a);
+      const facing = Math.cos(a * Math.PI / 180);   // 1 = front, 0 = edge
+      const vis    = Math.max(0, facing);
+
+      const inner = cards[i].firstChild;
+      inner.style.opacity = (0.05 + 0.95 * vis).toFixed(3);
+      inner.style.filter  =
+        `blur(${((1 - vis) * 5).toFixed(2)}px) ` +
+        `brightness(${Math.max(0.25, 0.4 + 0.6 * facing).toFixed(2)})`;
+
+      // past the edge-on point the card faces away — hide it cleanly
+      cards[i].style.visibility = abs > 89 ? "hidden" : "visible";
+
+      if (abs < bestAbs) { bestAbs = abs; best = i; }
+    }
+
+    if (best !== frontIdx) {
+      frontIdx = best;
+      capTitle.textContent = ITEMS[best].title;
+      capMeta.textContent  =
+        String(best + 1).padStart(2, "0") + " / " + String(N).padStart(2, "0");
+      cards.forEach((c, i) => c.classList.toggle("active", i === best));
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Animation loop — inertia, snapping, tweening
+  ------------------------------------------------------------------ */
+  function tick() {
+    if (dragging) {
+      /* rot is driven directly by pointermove */
+    } else if (targetRot !== null) {
+      rot += (targetRot - rot) * 0.11;
+      if (Math.abs(targetRot - rot) < 0.04) {
+        rot = targetRot;
+        targetRot = null;
+      }
+    } else if (Math.abs(velocity) > 0.05) {
+      rot += velocity;
+      velocity *= 0.94;
+    } else {
+      velocity = 0;
+      const snapped = Math.round(rot / STEP) * STEP;
+      if (Math.abs(snapped - rot) > 0.01) {
+        rot += (snapped - rot) * 0.11;
+      } else {
+        rot = snapped;
+      }
+    }
+
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  /* ------------------------------------------------------------------
+     Navigation helper
+  ------------------------------------------------------------------ */
+  function goTo(index) {
+    const base = -((index % N) + N) % N * STEP;
+    const wrapped = -(((index % N) + N) % N) * STEP;
+    const k = Math.round((rot - wrapped) / 360);
+    targetRot = wrapped + k * 360;
+    velocity = 0;
+  }
+
+  /* ------------------------------------------------------------------
+     Pointer interaction
+  ------------------------------------------------------------------ */
+  stage.addEventListener("pointerdown", (e) => {
+    if (pointerId !== null) return;
+    pointerId = e.pointerId;
+    dragging  = true;
+    targetRot = null;
+    velocity  = 0;
+    startX = lastX = e.clientX;
+    startRot = rot;
+    moved = 0;
+    downCard = e.target.closest(".card");
+    stage.setPointerCapture(e.pointerId);
+  });
+
+  stage.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== pointerId) return;
+    const dx = e.clientX - lastX;
+    lastX = e.clientX;
+    moved += Math.abs(dx);
+    velocity = dx * 0.6;
+    rot = startRot + (e.clientX - startX) * 0.26;
+  });
+
+  function endDrag(e) {
+    if (e.pointerId !== pointerId) return;
+    pointerId = null;
+    dragging  = false;
+
+    if (moved < 6 && downCard) {
+      const idx = cards.indexOf(downCard);
+      if (idx >= 0) goTo(idx);
+    }
+    downCard = null;
+  }
+
+  stage.addEventListener("pointerup", endDrag);
+  stage.addEventListener("pointercancel", endDrag);
+
+  /* ------------------------------------------------------------------
+     Wheel — one notch nudges the ring forward / back
+  ------------------------------------------------------------------ */
+  stage.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    targetRot = null;
+    rot -= e.deltaY * 0.16;
+    velocity = -e.deltaY * 0.012;
+  }, { passive: false });
+
+  /* ------------------------------------------------------------------
+     Keyboard
+  ------------------------------------------------------------------ */
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(frontIdx + 1); }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); goTo(frontIdx - 1); }
+  });
+
+  /* ------------------------------------------------------------------
+     Resize
+  ------------------------------------------------------------------ */
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(layout, 120);
+  });
+
+  /* ------------------------------------------------------------------
+     Go
+  ------------------------------------------------------------------ */
+  layout();
+  requestAnimationFrame(tick);
+
+})();
+</script>
+</body>
+</html>

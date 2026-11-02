@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deck — Photo Stack Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+
+  :root {
+    --ink: #e8ecf5;
+    --muted: rgba(210, 220, 240, .46);
+    --accent: #8fa8d8;
+    --line: rgba(255, 255, 255, .1);
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    background: #080a0f;
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ---------- ambient ---------- */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 620px at 16% -8%, rgba(120, 150, 255, .14), transparent 62%),
+      radial-gradient(820px 700px at 90% 108%, rgba(80, 200, 220, .10), transparent 62%),
+      radial-gradient(680px 520px at 55% 45%, rgba(160, 130, 255, .06), transparent 68%),
+      linear-gradient(168deg, #111520 0%, #080a0f 58%, #0a0c12 100%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 40; pointer-events: none;
+    opacity: .13; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* ---------- top bar ---------- */
+  .bar {
+    position: relative; z-index: 5;
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 22px clamp(16px, 3vw, 34px) 10px;
+  }
+  .brand {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .44em; text-indent: .44em;
+    text-transform: uppercase;
+    color: #dbe2f2;
+    white-space: nowrap;
+  }
+  .brand span { color: var(--accent); margin: 0 .14em; }
+  .hint {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: opacity .6s ease;
+  }
+
+  /* ---------- gallery page tabs ---------- */
+  .gallery-tabs {
+    display: flex;
+    flex: 1 0 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    white-space: nowrap;
+  }
+  .gallery-tabs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .04);
+    color: rgba(220, 228, 244, .7);
+    font: inherit;
+    font-size: 8.5px;
+    letter-spacing: .14em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background .25s, border-color .25s, color .25s;
+  }
+  .gallery-tabs a:hover {
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .28);
+    color: #eef2fa;
+  }
+  .gallery-tabs a[aria-current="page"] {
+    background: rgba(143, 168, 216, .17);
+    border-color: rgba(143, 168, 216, .48);
+    color: #eef2fa;
+  }
+  .gallery-tabs a:focus-visible {
+    outline: 2px solid rgba(150, 175, 230, .85);
+    outline-offset: 3px;
+  }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position: relative; z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    touch-action: none;
+  }
+
+  .deck {
+    position: relative;
+    width: 0;
+    height: 0;
+    animation: rise 1s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(22px); }
+  }
+
+  /* ---------- card ---------- */
+  .card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(clamp(200px, 32vh, 330px), 76vw);
+    aspect-ratio: 3 / 4;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #11151f;
+    box-shadow:
+      0 2px 2px rgba(0, 0, 0, .4),
+      0 30px 70px -20px rgba(0, 0, 0, .92),
+      0 0 0 1px rgba(255, 255, 255, .06) inset;
+    transform: translate(-50%, -50%);
+    transition:
+      transform .7s cubic-bezier(.22, 1, .36, 1),
+      opacity .6s ease,
+      box-shadow .4s ease;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    cursor: grab;
+    touch-action: none;
+  }
+  .card.no-t { transition: none !important; }
+  .card.dragging {
+    cursor: grabbing;
+    box-shadow:
+      0 3px 3px rgba(0, 0, 0, .45),
+      0 46px 100px -22px rgba(0, 0, 0, .96),
+      0 0 0 1px rgba(255, 255, 255, .13) inset;
+  }
+
+  .card img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .card .grad {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+      rgba(8, 10, 15, .34) 0%,
+      transparent 30%,
+      transparent 62%,
+      rgba(8, 10, 15, .66) 100%);
+  }
+
+  .card .stamp {
+    position: absolute;
+    top: 14px; left: 16px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    letter-spacing: .22em;
+    color: rgba(240, 244, 255, .78);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, .8);
+    pointer-events: none;
+  }
+
+  /* ---------- side navigation ---------- */
+  .nav {
+    position: absolute;
+    top: 50%;
+    width: 50px; height: 50px;
+    margin-top: -25px;
+    display: grid; place-items: center;
+    font-size: 24px;
+    line-height: 1;
+    color: #dbe2f2;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background .25s, border-color .25s, transform .25s, opacity .3s;
+    z-index: 4;
+  }
+  .nav:hover { background: rgba(255, 255, 255, .11); border-color: rgba(255, 255, 255, .28); }
+  .nav:active { transform: scale(.92); }
+  .nav:focus-visible { outline: 2px solid rgba(150, 175, 230, .85); outline-offset: 3px; }
+  .nav.prev { left: clamp(10px, 4vw, 54px); }
+  .nav.next { right: clamp(10px, 4vw, 54px); }
+
+  /* ---------- footer info ---------- */
+  .info {
+    position: relative; z-index: 5;
+    flex: 0 0 auto;
+    text-align: center;
+    padding: 6px 22px clamp(22px, 4vh, 40px);
+    min-height: 132px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 9px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(232, 236, 245, .17);
+    transition: background .45s ease, transform .45s ease, box-shadow .45s ease;
+  }
+  .dot.active {
+    background: var(--accent);
+    transform: scale(1.55);
+    box-shadow: 0 0 14px rgba(143, 168, 216, .7);
+  }
+
+  .title {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1.1;
+    letter-spacing: -.01em;
+    color: #eef2fa;
+  }
+  .title.pop { animation: pop .55s cubic-bezier(.22, 1, .36, 1); }
+  @keyframes pop {
+    0%   { opacity: 0; transform: translateY(9px); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  .meta {
+    margin: 9px 0 0;
+    font-size: 10px;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: rgba(210, 220, 240, .5);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 620px) {
+    .bar { padding: 16px 18px 4px; }
+    .brand { font-size: 10.5px; letter-spacing: .34em; }
+    .hint { display: none; }
+    .gallery-tabs { gap: 4px; margin-top: 6px; }
+    .gallery-tabs a { min-height: 30px; padding: 6px 9px; font-size: 7.5px; }
+    .nav { width: 42px; height: 42px; margin-top: -21px; font-size: 20px; }
+    .nav.prev { left: 8px; }
+    .nav.next { right: 8px; }
+    .info { min-height: 118px; }
+    .title { font-size: 21px; }
+    .meta { font-size: 9px; letter-spacing: .26em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .deck { animation: none; }
+    .card, .dot, .title.pop, .nav { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+
+  /* Keep the complete page navigation accessible on narrow screens. */
+  .gallery-tabs { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">Deck<span>·</span>Archive</div>
+    <p class="hint" id="hint">Drag &nbsp;·&nbsp; Click &nbsp;·&nbsp; ← →</p>
+    <nav class="gallery-tabs" aria-label="Gallery pages">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html">Orbital</a>
+      <a href="memories.html">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html" aria-current="page">Deck</a>
+      <a href="profile.html">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+          <a href="corridor.html">Corridor</a>
+     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="deck" id="deck" aria-label="Photo stack"></div>
+    <button class="nav prev" id="prev" type="button" aria-label="Previous photo">‹</button>
+    <button class="nav next" id="next" type="button" aria-label="Next photo">›</button>
+  </main>
+
+  <footer class="info">
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <h2 class="title" id="title"></h2>
+    <p class="meta" id="meta"></p>
+  </footer>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Collection
+  ------------------------------------------------------------------ */
+  const ITEMS = [
+    { seed:'deck-a1', title:'Aurora Fields',   place:'Iceland',   year:2023 },
+    { seed:'deck-b2', title:'Salt Horizon',    place:'Uyuni',     year:2022 },
+    { seed:'deck-c3', title:'Night Market',    place:'Taipei',    year:2024 },
+    { seed:'deck-d4', title:'Pine Ridge',      place:'Oregon',    year:2021 },
+    { seed:'deck-e5', title:'Blue Corridor',   place:'Lisbon',    year:2023 },
+    { seed:'deck-f6', title:'Terrace Rain',    place:'Kyoto',     year:2022 },
+    { seed:'deck-g7', title:'Dune Lines',      place:'Merzouga',  year:2020 },
+    { seed:'deck-h8', title:'Last Ferry',      place:'Bergen',    year:2020 }
+  ];
+
+  const N = ITEMS.length;
+
+  /* stack positions: index 0 = front card */
+  const OFF = [
+    { x:  0,  y:  0, r:  0, s: 1.00, o: 1.00 },
+    { x:-15,  y: 12, r: -4, s: 0.96, o: 1.00 },
+    { x: 15,  y: 24, r:  4, s: 0.92, o: 1.00 },
+    { x: -9,  y: 34, r: -6, s: 0.88, o: 0.85 },
+    { x:  9,  y: 42, r:  6, s: 0.84, o: 0.00 }
+  ];
+  const offAt = pos => OFF[Math.min(pos, OFF.length - 1)];
+
+  /* ------------------------------------------------------------------
+     DOM
+  ------------------------------------------------------------------ */
+  const deck    = document.getElementById('deck');
+  const dotsEl  = document.getElementById('dots');
+  const titleEl = document.getElementById('title');
+  const metaEl  = document.getElementById('meta');
+  const hintEl  = document.getElementById('hint');
+
+  const btnPrev = document.getElementById('prev');
+  const btnNext = document.getElementById('next');
+
+  /* ------------------------------------------------------------------
+     State
+  ------------------------------------------------------------------ */
+  const order = ITEMS.map((_, i) => i);   // order[0] is the front card
+  const cards = [];
+
+  let animating = false;
+  let interacted = false;
+
+  let dragging = false;
+  let dragCard = null;
+  let pointerId = null;
+  let startX = 0;
+  let dragDX = 0;
+
+  /* ------------------------------------------------------------------
+     Build the deck
+  ------------------------------------------------------------------ */
+  ITEMS.forEach((item, i) => {
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.style.transform = 'translate(-50%, -50%) scale(.9)';
+    el.style.opacity = '0';
+    el.setAttribute('aria-label', `${item.title}, ${item.place}, ${item.year}`);
+
+    el.innerHTML = `
+      <img src="https://picsum.photos/seed/${item.seed}/640/860"
+           alt="${item.title}" draggable="false" decoding="async">
+      <div class="grad"></div>
+      <span class="stamp">${String(i + 1).padStart(2, '0')}</span>
+    `;
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onUp);
+
+    deck.appendChild(el);
+    cards.push(el);
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    dotsEl.appendChild(dot);
+  });
+
+  /* ------------------------------------------------------------------
+     Rendering
+  ------------------------------------------------------------------ */
+  function applyTransforms(skip = null) {
+    order.forEach((idx, pos) => {
+      const el = cards[idx];
+      if (el === skip) return;
+      const o = offAt(pos);
+      el.style.zIndex = N - pos;
+      el.style.transform =
+        `translate(-50%, -50%) translate(${o.x}px, ${o.y}px) ` +
+        `rotate(${o.r}deg) scale(${o.s})`;
+      el.style.opacity = o.o;
+    });
+  }
+
+  function updateInfo() {
+    const idx = order[0];
+    const item = ITEMS[idx];
+
+    titleEl.textContent = item.title;
+    metaEl.textContent = `${item.place} · ${item.year}`;
+
+    /* retrigger the pop animation */
+    titleEl.classList.remove('pop');
+    void titleEl.offsetWidth;
+    titleEl.classList.add('pop');
+
+    dotsEl.childNodes.forEach((dot, i) =>
+      dot.classList.toggle('active', i === idx)
+    );
+  }
+
+  function markInteracted() {
+    if (interacted) return;
+    interacted = true;
+    hintEl.style.opacity = '.22';
+  }
+
+  /* ------------------------------------------------------------------
+     Advance the deck
+  ------------------------------------------------------------------ */
+  function advance(dir) {
+    if (animating) return;
+    animating = true;
+    markInteracted();
+
+    const topIdx = order[0];
+    const topEl = cards[topIdx];
+
+    /* reorder immediately so the rest of the deck starts rising */
+    if (dir === 1) order.push(order.shift());
+    else           order.unshift(order.pop());
+
+    /* the departing card flies out */
+    topEl.style.transition =
+      'transform .55s cubic-bezier(.4, 0, .3, 1), opacity .45s ease';
+    topEl.style.zIndex = N + 5;
+    topEl.style.transform =
+      `translate(-50%, -50%) translate(${dir * -88}%, -26px) ` +
+      `rotate(${dir * -18}deg) scale(.88)`;
+    topEl.style.opacity = '0';
+
+    /* everything else glides into its new place */
+    applyTransforms(topEl);
+    updateInfo();
+
+    /* once it is off-screen, snap it silently to the back of the stack */
+    window.setTimeout(() => {
+      const backPos = order.indexOf(topIdx);
+      const o = offAt(backPos);
+
+      topEl.classList.add('no-t');
+      topEl.style.transition = '';
+      topEl.style.transform =
+        `translate(-50%, -50%) translate(${o.x}px, ${o.y}px) ` +
+        `rotate(${o.r}deg) scale(${o.s})`;
+      topEl.style.opacity = o.o;
+      topEl.style.zIndex = N - backPos;
+      void topEl.offsetWidth;
+      topEl.classList.remove('no-t');
+
+      window.setTimeout(() => { animating = false; }, 40);
+    }, 570);
+  }
+
+  /* ------------------------------------------------------------------
+     Pointer dragging / tapping
+  ------------------------------------------------------------------ */
+  function onDown(e) {
+    if (animating) return;
+    if (e.currentTarget !== cards[order[0]]) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    dragging = true;
+    dragCard = e.currentTarget;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    dragDX = 0;
+
+    dragCard.classList.add('no-t', 'dragging');
+    try { dragCard.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  function onMove(e) {
+    if (!dragging || e.currentTarget !== dragCard || e.pointerId !== pointerId) return;
+
+    dragDX = e.clientX - startX;
+    const rot  = dragDX * 0.05;
+    const lift = Math.min(Math.abs(dragDX) * 0.04, 12);
+    const sc   = 1 - Math.min(Math.abs(dragDX) / 2400, 0.06);
+
+    dragCard.style.transform =
+      `translate(-50%, -50%) translate(${dragDX}px, ${-lift}px) ` +
+      `rotate(${rot}deg) scale(${sc})`;
+  }
+
+  function onUp(e) {
+    if (!dragging || e.currentTarget !== dragCard || e.pointerId !== pointerId) return;
+
+    dragging = false;
+    pointerId = null;
+
+    const card = dragCard;
+    const dx = dragDX;
+    dragCard = null;
+    dragDX = 0;
+
+    card.classList.remove('no-t', 'dragging');
+    try { card.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    if (Math.abs(dx) > 78) {
+      advance(dx < 0 ? 1 : -1);
+    } else if (Math.abs(dx) < 6) {
+      advance(1);                      /* treated as a tap */
+    } else {
+      applyTransforms();               /* spring back into place */
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Buttons & keyboard
+  ------------------------------------------------------------------ */
+  btnPrev.addEventListener('click', () => advance(-1));
+  btnNext.addEventListener('click', () => advance(1));
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      advance(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      advance(-1);
+    }
+  });
+
+  /* ------------------------------------------------------------------
+     Boot
+  ------------------------------------------------------------------ */
+  updateInfo();
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cards.forEach(el => { el.style.transition = ''; });
+      applyTransforms();
+    });
+  });
+
+  /* touch hint wording */
+  if (window.matchMedia('(hover: none)').matches) {
+    hintEl.textContent = 'Swipe or tap · ← →';
+  }
+
+})();
+</script>
+</body>
+</html>

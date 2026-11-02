@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memories Wall — Scatter Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #0e0d13;
+    color: #e8e6f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ---------- wall backdrop ---------- */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 620px at 18% -5%, rgba(120, 140, 255, .16), transparent 62%),
+      radial-gradient(820px 720px at 88% 105%, rgba(255, 150, 120, .12), transparent 62%),
+      radial-gradient(700px 500px at 60% 45%, rgba(90, 220, 200, .05), transparent 65%),
+      linear-gradient(165deg, #191826 0%, #0d0c12 62%, #100e16 100%);
+  }
+
+  body::after {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: .5;
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 68px 68px;
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 28%, transparent 78%);
+    mask-image: radial-gradient(circle at 50% 45%, #000 28%, transparent 78%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 6; pointer-events: none;
+    opacity: .16; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* ---------- top bar ---------- */
+  .bar {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 18px clamp(16px, 4vw, 44px);
+    transition: opacity .45s ease;
+  }
+  .brand {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .42em; text-indent: .42em;
+    text-transform: uppercase;
+    color: #cfcbe0;
+  }
+  .brand i { font-style: normal; color: #8f88b8; margin: 0 .18em; }
+
+  .actions { display: flex; gap: 8px; }
+  .actions button {
+    appearance: none;
+    font: inherit;
+    font-size: 10.5px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #d9d5ea;
+    padding: 9px 17px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(255,255,255,.045);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: background .25s, border-color .25s, transform .25s, color .25s;
+  }
+  .actions button:hover {
+    background: rgba(255,255,255,.11);
+    border-color: rgba(255,255,255,.3);
+    transform: translateY(-1px);
+  }
+  .actions button:active { transform: translateY(0) scale(.97); }
+  .actions button:focus-visible { outline: 2px solid rgba(150,170,255,.8); outline-offset: 3px; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+  }
+  .stage:active { cursor: grabbing; }
+
+  /* ---------- polaroid ---------- */
+  .polaroid {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: clamp(110px, 12.5vw, 172px);
+    margin: 0;
+    padding: 9px 9px 0;
+    border-radius: 4px;
+    background: linear-gradient(168deg, #fcfaf5 0%, #f1ede3 55%, #e6e0d3 100%);
+    box-shadow:
+      0 1px 1px rgba(0,0,0,.35),
+      0 18px 34px -10px rgba(0,0,0,.72),
+      0 48px 80px -34px rgba(0,0,0,.65);
+    transform: translate(-50%, -50%);
+    transition:
+      transform .85s cubic-bezier(.22, 1, .36, 1),
+      box-shadow .4s ease,
+      opacity .45s ease,
+      filter .45s ease;
+    will-change: transform;
+    cursor: grab;
+    touch-action: none;
+  }
+  .polaroid.no-anim { transition: none !important; }
+  .polaroid.dragging {
+    transition: none !important;
+    cursor: grabbing;
+    box-shadow:
+      0 30px 60px -14px rgba(0,0,0,.95),
+      0 0 0 1px rgba(255,255,255,.16);
+  }
+
+  /* little pin */
+  .polaroid::before {
+    content: "";
+    position: absolute;
+    top: -5px; left: 50%;
+    width: 11px; height: 11px;
+    margin-left: -5.5px;
+    border-radius: 50%;
+    z-index: 2;
+    background: radial-gradient(circle at 32% 28%, #fff 0%, #c9c3d8 38%, #6c6584 72%, #322d44 100%);
+    box-shadow: 0 2px 5px rgba(0,0,0,.55);
+  }
+
+  .photo {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 1px;
+    background: #22202c;
+  }
+  .photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    filter: saturate(.94) contrast(1.02);
+    transition: opacity .7s ease;
+    pointer-events: none;
+  }
+  .photo img.loaded { opacity: 1; }
+  .photo::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 26px rgba(0,0,0,.3);
+  }
+
+  .polaroid figcaption {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 10.5px;
+    line-height: 1.25;
+    letter-spacing: .01em;
+    color: #5d5768;
+    text-align: center;
+    padding: 11px 4px 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------- focus mode ---------- */
+  .polaroid.focused {
+    cursor: zoom-out;
+    box-shadow:
+      0 40px 90px -18px rgba(0,0,0,.96),
+      0 0 0 1px rgba(255,255,255,.2),
+      0 0 70px rgba(130,150,255,.18);
+  }
+
+  body.has-focus .polaroid:not(.focused) {
+    opacity: .24;
+    filter: blur(2.5px) saturate(.55);
+  }
+  body.has-focus .bar,
+  body.has-focus .hint { opacity: .3; }
+
+  /* ---------- hint ---------- */
+  .hint {
+    position: relative;
+    z-index: 10;
+    margin: 0;
+    padding: 0 16px 18px;
+    text-align: center;
+    font-size: 9.5px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: rgba(200, 195, 225, .36);
+    pointer-events: none;
+    transition: opacity .45s ease;
+  }
+
+
+  /* ---------- gallery page tabs ---------- */
+  .gallery-tabs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 8px 15px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 999px;
+    background: rgba(255,255,255,.045);
+    color: #d9d5ea;
+    font: inherit;
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background .25s, border-color .25s, color .25s, transform .25s;
+  }
+  .gallery-tabs a:hover {
+    background: rgba(255,255,255,.11);
+    border-color: rgba(255,255,255,.3);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .gallery-tabs a[aria-current="page"] {
+    border-color: rgba(180,170,230,.48);
+    background: rgba(143,136,184,.18);
+    color: #f4f0ff;
+  }
+  .gallery-tabs a:focus-visible {
+    outline: 2px solid rgba(150,170,255,.8);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 620px) {
+    .polaroid { width: clamp(96px, 27vw, 138px); }
+    .brand { font-size: 10px; letter-spacing: .3em; }
+    .actions { flex-wrap: wrap; justify-content: flex-end; }
+    .actions button, .gallery-tabs a { padding: 8px 10px; font-size: 8.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .polaroid { transition-duration: .01ms !important; }
+  }
+
+  /* Keep the complete page navigation accessible on narrow screens. */
+  .gallery-tabs { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">Memories<i>·</i>Wall</div>
+    <nav class="actions gallery-tabs" aria-label="Gallery pages and wall controls">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html">Orbital</a>
+      <a href="memories.html" aria-current="page">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html">Deck</a>
+      <a href="profile.html">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+      <button type="button" id="btn-shuffle">Shuffle</button>
+      <button type="button" id="btn-tidy">Tidy</button>
+          <a href="corridor.html">Corridor</a>
+     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+  </header>
+
+  <main class="stage" id="stage" aria-label="Scattered photo wall"></main>
+
+  <p class="hint">Drag to rearrange · Click to enlarge · Esc to close</p>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------------------------------------------------------------
+     Content
+  --------------------------------------------------------------- */
+  const PHOTOS = [
+    { title: "Harbor, 6 a.m.",   seed: "harbor06"  },
+    { title: "Rooftop static",   seed: "rooftop21" },
+    { title: "Ana in Lisbon",    seed: "lisboa14"  },
+    { title: "Cedar & fog",      seed: "cedarfog"  },
+    { title: "Late train home",  seed: "latetrain" },
+    { title: "Pool, August",     seed: "poolaug7"  },
+    { title: "Blue hour drive",  seed: "bluehour3" },
+    { title: "Market flowers",   seed: "market88"  },
+    { title: "Snow on wires",    seed: "snowwire"  },
+    { title: "The long stairs",  seed: "stairs45"  },
+    { title: "Diner at 2 a.m.",  seed: "diner2am"  },
+    { title: "First light",      seed: "firstlight"}
+  ];
+
+  const stage  = document.getElementById("stage");
+  const btnShuf = document.getElementById("btn-shuffle");
+  const btnTidy = document.getElementById("btn-tidy");
+
+  const items  = [];
+  const rand   = (a, b) => a + Math.random() * (b - a);
+
+  let zTop = 1;
+  let focused = null;
+  let drag = null;
+  let mode = "scatter";
+  let delayTimer = null;
+  let lastW = 0, lastH = 0;
+
+  /* ---------------------------------------------------------------
+     Build the polaroids
+  --------------------------------------------------------------- */
+  PHOTOS.forEach((data) => {
+    const el = document.createElement("figure");
+    el.className = "polaroid";
+
+    const photo = document.createElement("div");
+    photo.className = "photo";
+
+    const img = new Image();
+    img.alt = data.title;
+    img.decoding = "async";
+    img.draggable = false;
+    img.addEventListener("load", () => img.classList.add("loaded"));
+    img.addEventListener("error", () => img.remove());
+    img.src = `https://picsum.photos/seed/${data.seed}/560/560`;
+    if (img.complete) img.classList.add("loaded");
+
+    photo.appendChild(img);
+
+    const cap = document.createElement("figcaption");
+    cap.textContent = data.title;
+
+    el.append(photo, cap);
+    stage.appendChild(el);
+
+    const item = {
+      el, x: 0, y: 0, r: 0, s: 1, z: 0,
+      focused: false, saved: null, focusScale: 1
+    };
+    el.__item = item;
+    items.push(item);
+
+    el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup",   onPointerUp);
+    el.addEventListener("pointercancel", onPointerUp);
+  });
+
+  /* ---------------------------------------------------------------
+     Rendering
+  --------------------------------------------------------------- */
+  function render(it) {
+    const x = it.focused ? 0 : it.x;
+    const y = it.focused ? 0 : it.y;
+    const r = it.focused ? 0 : it.r;
+    const s = it.focused ? it.focusScale : it.s;
+    it.el.style.transform =
+      `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`;
+  }
+
+  function clearDelays(ms) {
+    clearTimeout(delayTimer);
+    delayTimer = setTimeout(() => {
+      items.forEach((it) => { it.el.style.transitionDelay = ""; });
+    }, ms);
+  }
+
+  function silent(fn) {
+    items.forEach((it) => it.el.classList.add("no-anim"));
+    fn();
+    void stage.offsetWidth;            // force style flush
+    requestAnimationFrame(() => {
+      items.forEach((it) => it.el.classList.remove("no-anim"));
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Layout: scatter
+  --------------------------------------------------------------- */
+  function scatter(animate) {
+    unfocus();
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+
+    items.forEach((it, i) => {
+      const w = it.el.offsetWidth  || 160;
+      const h = it.el.offsetHeight || 200;
+      const maxX = Math.max(0, (W - w) / 2 - 8);
+      const maxY = Math.max(0, (H - h) / 2 - 8);
+
+      it.x = rand(-maxX, maxX);
+      it.y = rand(-maxY, maxY);
+      it.r = rand(-15, 15);
+      it.s = 1;
+      it.z = ++zTop;
+      it.el.style.zIndex = it.z;
+
+      if (animate) it.el.style.transitionDelay = (i * 16) + "ms";
+      render(it);
+    });
+
+    if (animate) clearDelays(1100);
+    mode = "scatter";
+  }
+
+  /* ---------------------------------------------------------------
+     Layout: tidy grid
+  --------------------------------------------------------------- */
+  function tidy(animate) {
+    unfocus();
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    const n = items.length;
+
+    let cols = Math.round(Math.sqrt(n * W / H));
+    cols = Math.max(2, Math.min(n, cols));
+    const rows = Math.ceil(n / cols);
+    const cellW = W / cols;
+    const cellH = H / rows;
+
+    items.forEach((it, i) => {
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      const inRow = Math.min(cols, n - r * cols);
+
+      const w = it.el.offsetWidth  || 160;
+      const h = it.el.offsetHeight || 200;
+
+      it.s = Math.min(1, (cellW * 0.84) / w, (cellH * 0.84) / h);
+      it.x = (c - (inRow - 1) / 2) * cellW;
+      it.y = (r - (rows - 1) / 2) * cellH;
+      it.r = (i % 2 ? 1 : -1) * 1.2;
+      it.z = ++zTop;
+      it.el.style.zIndex = it.z;
+
+      if (animate) it.el.style.transitionDelay = (i * 14) + "ms";
+      render(it);
+    });
+
+    if (animate) clearDelays(1000);
+    mode = "tidy";
+  }
+
+  /* ---------------------------------------------------------------
+     Focus / unfocus
+  --------------------------------------------------------------- */
+  function focus(it) {
+    if (focused === it) return;
+    if (focused) unfocus();
+
+    it.saved = { x: it.x, y: it.y, r: it.r, s: it.s };
+    it.el.style.transitionDelay = "";
+
+    const w = it.el.offsetWidth || 160;
+    const h = it.el.offsetHeight || 200;
+    const byW = (stage.clientWidth  * 0.62) / w;
+    const byH = (stage.clientHeight * 0.62) / h;
+    it.focusScale = Math.max(1.05, Math.min(3.2, byW, byH));
+
+    it.focused = true;
+    it.el.classList.add("focused");
+    it.el.style.zIndex = 9999;
+
+    focused = it;
+    document.body.classList.add("has-focus");
+    render(it);
+  }
+
+  function unfocus() {
+    if (!focused) return;
+    const it = focused;
+    it.focused = false;
+    it.el.classList.remove("focused");
+
+    if (it.saved) {
+      it.x = it.saved.x;
+      it.y = it.saved.y;
+      it.r = it.saved.r;
+      it.s = it.saved.s;
+    }
+    it.el.style.zIndex = it.z;
+
+    focused = null;
+    document.body.classList.remove("has-focus");
+    render(it);
+  }
+
+  /* ---------------------------------------------------------------
+     Pointer dragging
+  --------------------------------------------------------------- */
+  function onPointerDown(e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (drag) return;
+
+    const el = e.currentTarget;
+    const it = el.__item;
+
+    drag = {
+      it, el,
+      id: e.pointerId,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: it.x,
+      oy: it.y,
+      moved: false,
+      wasFocused: it.focused
+    };
+
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+
+    if (!it.focused) {
+      el.classList.add("dragging");
+      el.style.transitionDelay = "";
+      it.z = ++zTop;
+      el.style.zIndex = it.z;
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+
+    const dx = e.clientX - drag.sx;
+    const dy = e.clientY - drag.sy;
+
+    if (!drag.moved && Math.hypot(dx, dy) > 5) drag.moved = true;
+
+    if (drag.moved && !drag.wasFocused) {
+      drag.it.x = drag.ox + dx;
+      drag.it.y = drag.oy + dy;
+      render(drag.it);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+
+    const { it, el, moved, wasFocused } = drag;
+    drag = null;
+    el.classList.remove("dragging");
+
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    if (!moved) {
+      if (wasFocused) unfocus();
+      else focus(it);
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     Background click + keyboard
+  --------------------------------------------------------------- */
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.target === stage) stage.__bgDown = true;
+  });
+  stage.addEventListener("pointerup", (e) => {
+    if (e.target === stage && stage.__bgDown) unfocus();
+    stage.__bgDown = false;
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") unfocus();
+    if (e.key === " " && focused) { e.preventDefault(); unfocus(); }
+  });
+
+  /* ---------------------------------------------------------------
+     Toolbar
+  --------------------------------------------------------------- */
+  btnShuf.addEventListener("click", () => scatter(true));
+  btnTidy.addEventListener("click", () => tidy(true));
+
+  /* ---------------------------------------------------------------
+     Resize
+  --------------------------------------------------------------- */
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const W = stage.clientWidth;
+      const H = stage.clientHeight;
+
+      if (mode === "tidy") {
+        silent(() => tidy(false));
+      } else {
+        const sx = lastW ? W / lastW : 1;
+        const sy = lastH ? H / lastH : 1;
+        silent(() => {
+          items.forEach((it) => {
+            it.x *= sx;
+            it.y *= sy;
+            render(it);
+          });
+        });
+      }
+
+      lastW = W;
+      lastH = H;
+      if (focused) focus(focused);   // recompute focus scale
+    }, 130);
+  });
+
+  /* ---------------------------------------------------------------
+     Go
+  --------------------------------------------------------------- */
+  lastW = stage.clientWidth;
+  lastH = stage.clientHeight;
+
+  // start stacked in the centre, then fly outward
+  items.forEach((it) => {
+    it.el.style.transitionDelay = "0ms";
+    render(it);
+  });
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => scatter(true));
+  });
+
+})();
+</script>
+</body>
+</html>

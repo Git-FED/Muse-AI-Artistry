@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor — Infinite Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    background: #07080c;
+    color: #e8eaf3;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body.lock { overflow: hidden; }
+
+  /* ---------- ambient ---------- */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(1000px 700px at 50% 45%, rgba(90, 130, 220, .10), transparent 68%),
+      radial-gradient(900px 640px at 14% -8%, rgba(150, 110, 220, .08), transparent 62%),
+      radial-gradient(820px 700px at 90% 108%, rgba(70, 200, 210, .07), transparent 62%),
+      linear-gradient(170deg, #0e1018 0%, #07080c 58%, #090a11 100%);
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 60; pointer-events: none;
+    opacity: .13; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .vignette {
+    position: fixed; inset: 0; z-index: 50; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 34%, rgba(7, 8, 12, .82) 92%);
+  }
+
+  /* ---------- header ---------- */
+  .bar {
+    position: relative; z-index: 5;
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 22px clamp(16px, 3.4vw, 42px) 6px;
+  }
+  .brand {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .46em; text-indent: .46em;
+    text-transform: uppercase;
+    color: #dbe0f0;
+    white-space: nowrap;
+  }
+  .brand span { color: #6f8ed8; margin: 0 .14em; }
+  .hint {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: rgba(200, 210, 235, .38);
+    white-space: nowrap;
+    transition: opacity .6s ease;
+  }
+
+  /* ---------- stage ---------- */
+  .stage-wrap {
+    position: relative; z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .stage {
+    position: absolute; inset: 0;
+    perspective: 1000px;
+    perspective-origin: 50% 50%;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+  }
+  .stage:active { cursor: grabbing; }
+
+  .tunnel {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0; height: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* ---------- card ---------- */
+  .card {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: clamp(180px, 30vw, 340px);
+    aspect-ratio: 34 / 44;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #121520;
+    transform: translate(-50%, -50%) translateZ(0);
+    will-change: transform, opacity, filter;
+    box-shadow:
+      0 30px 70px -24px rgba(0, 0, 0, .95),
+      0 0 0 1px rgba(255, 255, 255, .05) inset;
+  }
+
+  .card img {
+    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+    transition: box-shadow .5s ease;
+  }
+  .card.front::after {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .16),
+      0 0 40px rgba(120, 150, 230, .18);
+  }
+
+  /* title overlay on the front card */
+  .card-label {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 44px 16px 14px;
+    background: linear-gradient(180deg, transparent, rgba(4, 5, 10, .82));
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity .55s ease,
+      transform .65s cubic-bezier(.22, 1, .36, 1);
+    pointer-events: none;
+  }
+  .card.front .card-label { opacity: 1; transform: none; }
+
+  .card-label b {
+    display: block;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(15px, 1.4vw, 19px);
+    line-height: 1.15;
+    color: #f3f5fb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-label i {
+    display: block;
+    margin-top: 5px;
+    font-style: normal;
+    font-size: 8.5px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: rgba(190, 205, 240, .72);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------- side navigation ---------- */
+  .nav {
+    position: absolute;
+    top: 50%;
+    width: 50px; height: 50px;
+    margin-top: -25px;
+    display: grid; place-items: center;
+    font-size: 22px;
+    line-height: 1;
+    color: #dbe0f0;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background .25s, border-color .25s, transform .25s;
+    z-index: 4;
+  }
+  .nav:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); }
+  .nav:active { transform: scale(.92); }
+  .nav:focus-visible { outline: 2px solid rgba(130, 165, 240, .9); outline-offset: 3px; }
+  .nav.prev { left: clamp(10px, 3vw, 40px); }
+  .nav.next { right: clamp(10px, 3vw, 40px); }
+
+  /* ---------- footer ---------- */
+  .foot {
+    position: relative; z-index: 5;
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    gap: clamp(14px, 2vw, 26px);
+    flex-wrap: wrap;
+    padding: 8px 22px clamp(22px, 4vh, 40px);
+    text-align: center;
+  }
+
+  .counter {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: rgba(200, 210, 235, .5);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .counter b { color: #e4e9f6; font-weight: 500; }
+
+  .view-btn {
+    appearance: none;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: #e4e9f6;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .05);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: background .25s, border-color .25s, transform .25s;
+  }
+  .view-btn:hover { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .3); }
+  .view-btn:active { transform: scale(.96); }
+  .view-btn:focus-visible { outline: 2px solid rgba(130, 165, 240, .9); outline-offset: 3px; }
+
+  /* ---------- lightbox ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 70;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(16px, 4vw, 54px);
+    background: rgba(4, 5, 9, .92);
+    -webkit-backdrop-filter: blur(18px) saturate(.9);
+    backdrop-filter: blur(18px) saturate(.9);
+    opacity: 0; visibility: hidden;
+    transition: opacity .45s ease, visibility .45s ease;
+  }
+  .lb.open { opacity: 1; visibility: visible; }
+
+  .lb-fig {
+    margin: 0;
+    display: flex; flex-direction: column; gap: 15px;
+    max-width: min(1080px, 94vw);
+    transform: scale(.95) translateY(8px);
+    transition: transform .6s cubic-bezier(.22, 1, .36, 1);
+  }
+  .lb.open .lb-fig { transform: none; }
+
+  .lb-fig img {
+    display: block;
+    max-width: 100%;
+    max-height: 72vh;
+    width: auto; height: auto;
+    margin: 0 auto;
+    border-radius: 10px;
+    background: #121520;
+    box-shadow: 0 42px 100px -30px #000;
+  }
+
+  .lb-fig h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(18px, 2vw, 24px);
+    text-align: center;
+    color: #f3f5fb;
+  }
+  .lb-meta {
+    margin: 0;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(160, 185, 240, .68);
+  }
+
+  .lb-btn {
+    position: absolute;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    font-size: 17px;
+    line-height: 1;
+    color: #e4e9f6;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: background .25s, border-color .25s, transform .25s;
+  }
+  .lb-btn:hover { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .3); }
+  .lb-btn:active { transform: scale(.92); }
+  .lb-btn:focus-visible { outline: 2px solid rgba(130, 165, 240, .9); outline-offset: 3px; }
+
+  .lb-x { top: clamp(14px, 3vw, 28px); right: clamp(14px, 3vw, 28px); }
+  .lb-prev { left: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+  .lb-next { right: clamp(8px, 2.4vw, 30px); top: 50%; margin-top: -22px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 620px) {
+    .hint { display: none; }
+    .brand { font-size: 10.5px; letter-spacing: .34em; }
+    .nav { width: 42px; height: 42px; margin-top: -21px; font-size: 19px; }
+    .nav.prev { left: 8px; }
+    .nav.next { right: 8px; }
+    .lb-prev, .lb-next { display: none; }
+    .foot { gap: 12px; padding-bottom: 20px; }
+    .view-btn { padding: 9px 16px; font-size: 9.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .nav, .lb, .lb-fig, .lb-btn, .view-btn, .card-label, .tunnel {
+      transition-duration: .01ms !important;
+    }
+  }
+
+  /* ---------- gallery page tabs ---------- */
+  .gallery-tabs {
+    display: flex;
+    flex: 1 0 100%;
+    order: 3;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .gallery-tabs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .04);
+    color: rgba(220, 228, 244, .7);
+    font: inherit;
+    font-size: 8.5px;
+    letter-spacing: .14em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background .25s, border-color .25s, color .25s;
+  }
+  .gallery-tabs a:hover {
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .28);
+    color: #eef2fa;
+  }
+  .gallery-tabs a[aria-current="page"] {
+    background: rgba(143, 168, 216, .17);
+    border-color: rgba(143, 168, 216, .48);
+    color: #eef2fa;
+  }
+  .gallery-tabs a:focus-visible {
+    outline: 2px solid rgba(150, 175, 230, .85);
+    outline-offset: 3px;
+  }
+  @media (max-width: 620px) {
+    .gallery-tabs { gap: 4px; margin-top: 6px; }
+    .gallery-tabs a { min-height: 30px; padding: 6px 9px; font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">Corridor<span>·</span>Archive</div>
+    <p class="hint" id="hint">Scroll &nbsp;·&nbsp; Drag &nbsp;·&nbsp; Arrows</p>
+
+    <nav class="gallery-tabs" aria-label="Gallery pages">
+      <a href="index.html">Home</a>
+      <a href="orbital-gallery.html">Orbital</a>
+      <a href="memories.html">Memories</a>
+      <a href="prism.html">Prism</a>
+      <a href="deck.html">Deck</a>
+      <a href="profile.html">Profile</a>
+      <a href="ribbon.html">Ribbon</a>
+      <a href="corridor.html" aria-current="page">Corridor</a>
+     <a href="exclusives.html">Exclusives</a> <a href="projects.html">Projects</a> </nav>
+  </header>
+
+  <main class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="tunnel" id="tunnel"></div>
+    </div>
+    <button class="nav prev" id="prev" type="button" aria-label="Previous photo">‹</button>
+    <button class="nav next" id="next" type="button" aria-label="Next photo">›</button>
+  </main>
+
+  <footer class="foot">
+    <span class="counter"><b id="cur">01</b> / <span id="tot">10</span></span>
+    <button class="view-btn" id="viewBtn" type="button">View image</button>
+  </footer>
+
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Photo viewer">
+    <button class="lb-btn lb-x" id="lbX" type="button" aria-label="Close viewer">✕</button>
+    <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="Previous photo">‹</button>
+    <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="Next photo">›</button>
+    <figure class="lb-fig">
+      <img id="lbImg" alt="">
+      <figcaption>
+        <h2 id="lbTitle"></h2>
+        <p class="lb-meta" id="lbMeta"></p>
+      </figcaption>
+    </figure>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------
+     Collection
+  ------------------------------------------------------------------ */
+  const ITEMS = [
+    { seed:'cor-a1',  title:'Aurora Fields',   place:'Iceland',   year:2023 },
+    { seed:'cor-b2',  title:'Salt Horizon',    place:'Uyuni',     year:2022 },
+    { seed:'cor-c3',  title:'Night Market',    place:'Taipei',    year:2024 },
+    { seed:'cor-d4',  title:'Pine Ridge',      place:'Oregon',    year:2021 },
+    { seed:'cor-e5',  title:'Blue Corridor',   place:'Lisbon',    year:2023 },
+    { seed:'cor-f6',  title:'Terrace Rain',    place:'Kyoto',     year:2022 },
+    { seed:'cor-g7',  title:'Dune Lines',      place:'Merzouga',  year:2020 },
+    { seed:'cor-h8',  title:'Glass Lobby',     place:'Rotterdam', year:2024 },
+    { seed:'cor-i9',  title:'Low Tide',        place:'Normandy',  year:2021 },
+    { seed:'cor-j10', title:'Last Ferry',      place:'Bergen',    year:2020 }
+  ];
+
+  const N = ITEMS.length;
+  const thumb = s => `https://picsum.photos/seed/${s}/680/880`;
+  const full  = s => `https://picsum.photos/seed/${s}/1500/1100`;
+
+  /* ------------------------------------------------------------------
+     Tuning
+  ------------------------------------------------------------------ */
+  const SPACING = 280;
+  const MAX_SLOT = 6;
+  const FLY_OUT_Z = 500;
+  const FLY_OUT_ROT = 8;
+
+  const OPACITY = [1, 0.9, 0.75, 0.58, 0.4, 0.24, 0.12];
+  const BLUR    = [0, 0, 0.5, 1, 1.8, 2.6, 3.4];
+
+  /* ------------------------------------------------------------------
+     DOM
+  ------------------------------------------------------------------ */
+  const stage  = document.getElementById('stage');
+  const tunnel = document.getElementById('tunnel');
+  const hint   = document.getElementById('hint');
+  const curEl  = document.getElementById('cur');
+  const totEl  = document.getElementById('tot');
+  const viewBtn= document.getElementById('viewBtn');
+
+  const btnPrev = document.getElementById('prev');
+  const btnNext = document.getElementById('next');
+
+  const lb      = document.getElementById('lb');
+  const lbImg   = document.getElementById('lbImg');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbMeta  = document.getElementById('lbMeta');
+  const lbX     = document.getElementById('lbX');
+  const lbPrev  = document.getElementById('lbPrev');
+  const lbNext  = document.getElementById('lbNext');
+
+  totEl.textContent = String(N).padStart(2, '0');
+
+  /* ------------------------------------------------------------------
+     Environment
+  ------------------------------------------------------------------ */
+  const noHover = window.matchMedia('(hover: none)').matches;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (noHover) hint.textContent = 'Swipe · Tap to view';
+
+  /* ------------------------------------------------------------------
+     Build the cards
+  ------------------------------------------------------------------ */
+  const cards = [];
+  const order = ITEMS.map((_, i) => i);   // order[0] is the front card
+
+  ITEMS.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.style.opacity = '0';
+    el.style.filter = 'blur(8px)';
+    el.style.transform = 'translate(-50%, -50%) translateZ(-3000px)';
+
+    const img = new Image();
+    img.alt = item.title;
+    img.decoding = 'async';
+    img.src = thumb(item.seed);
+    img.draggable = false;
+
+    const label = document.createElement('div');
+    label.className = 'card-label';
+    label.innerHTML = `<b>${item.title}</b><i>${item.place} · ${item.year}</i>`;
+
+    el.append(img, label);
+    tunnel.appendChild(el);
+    cards.push(el);
+  });
+
+  /* ------------------------------------------------------------------
+     Slots
+  ------------------------------------------------------------------ */
+  function applySlot(idx, slot, animate, delay) {
+    const el = cards[idx];
+    const visible = slot <= MAX_SLOT;
+
+    const z = -slot * SPACING;
+    const o = visible ? OPACITY[slot] : 0;
+    const b = visible ? BLUR[slot]    : 6;
+
+    if (!animate) el.style.transition = 'none';
+    else {
+      el.style.transition =
+        `transform .8s cubic-bezier(.22, 1, .36, 1) ${delay || 0}ms, ` +
+        `opacity .65s ease ${delay || 0}ms, ` +
+        `filter .65s ease ${delay || 0}ms`;
+    }
+
+    el.style.transform = `translate(-50%, -50%) translateZ(${z}px)`;
+    el.style.opacity   = String(o);
+    el.style.filter    = `blur(${b}px)`;
+
+    if (!animate) {
+      void el.offsetWidth;
+      el.style.transition = '';
+    }
+
+    el.classList.toggle('front', slot === 0);
+  }
+
+  /* ------------------------------------------------------------------
+     Info
+  ------------------------------------------------------------------ */
+  function updateInfo() {
+    curEl.textContent = String(order[0] + 1).padStart(2, '0');
+  }
+
+  /* ------------------------------------------------------------------
+     Advance
+  ------------------------------------------------------------------ */
+  let animating = false;
+
+  function advance(dir) {
+    if (animating) return;
+    animating = true;
+
+    if (dir === 1) {
+      const frontIdx = order[0];
+      const frontEl  = cards[frontIdx];
+
+      /* fly the front card past the camera */
+      frontEl.style.transition =
+        'transform .55s cubic-bezier(.4, 0, .2, 1), ' +
+        'opacity .45s ease, filter .45s ease';
+      frontEl.style.transform =
+        `translate(-50%, -50%) translateZ(${FLY_OUT_Z}px) ` +
+        `rotateZ(-${FLY_OUT_ROT}deg)`;
+      frontEl.style.opacity = '0';
+      frontEl.style.filter  = 'blur(6px)';
+      frontEl.classList.remove('front');
+
+      /* shuffle the queue */
+      order.push(order.shift());
+
+      /* every remaining card steps one slot forward */
+      order.forEach((idx, slot) => {
+        if (idx === frontIdx) return;
+        applySlot(idx, slot, true, 0);
+      });
+
+      updateInfo();
+
+      /* once the flying card has cleared the camera, teleport it to the back */
+      window.setTimeout(() => {
+        const backSlot = order.indexOf(frontIdx);
+
+        frontEl.style.transition = 'none';
+        frontEl.style.transform =
+          `translate(-50%, -50%) translateZ(${-backSlot * SPACING}px)`;
+        frontEl.style.opacity = '0';
+        frontEl.style.filter  = 'blur(6px)';
+        void frontEl.offsetWidth;
+        frontEl.style.transition = '';
+
+        window.setTimeout(() => { animating = false; }, 120);
+      }, 560);
+
+    } else {
+      /* reverse — the deepest hidden card flies in from in front of the camera */
+      const backIdx  = order[order.length - 1];
+      const backEl   = cards[backIdx];
+
+      backEl.style.transition = 'none';
+      backEl.style.transform =
+        `translate(-50%, -50%) translateZ(${FLY_OUT_Z}px) ` +
+        `rotateZ(${FLY_OUT_ROT}deg)`;
+      backEl.style.opacity = '0';
+      backEl.style.filter  = 'blur(6px)';
+      void backEl.offsetWidth;
+      backEl.style.transition = '';
+
+      /* shuffle the queue */
+      order.unshift(order.pop());
+
+      /* animate everyone to their new slots, including the incoming card */
+      order.forEach((idx, slot) => {
+        applySlot(idx, slot, true, 0);
+      });
+
+      updateInfo();
+
+      window.setTimeout(() => { animating = false; }, 700);
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Pointer drag → advance / reverse
+  ------------------------------------------------------------------ */
+  let downX = null;
+  let dragged = false;
+
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (animating) return;
+    downX = e.clientX;
+    dragged = false;
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (downX === null) return;
+    if (Math.abs(e.clientX - downX) > 8) dragged = true;
+  });
+
+  stage.addEventListener('pointerup', (e) => {
+    if (downX === null) return;
+    const dx = e.clientX - downX;
+    downX = null;
+
+    if (dragged && Math.abs(dx) > 60) {
+      advance(dx < 0 ? 1 : -1);
+    } else if (!dragged) {
+      /* a plain click on the front card opens it */
+      const frontEl = cards[order[0]];
+      if (frontEl.contains(e.target)) openLightbox(order[0]);
+    }
+  });
+
+  stage.addEventListener('pointercancel', () => { downX = null; });
+
+  /* ------------------------------------------------------------------
+     Wheel — one nudge per notch
+  ------------------------------------------------------------------ */
+  let wheelLock = false;
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (wheelLock || animating) return;
+    wheelLock = true;
+    advance(e.deltaY > 0 ? 1 : -1);
+    window.setTimeout(() => { wheelLock = false; }, 380);
+  }, { passive: false });
+
+  /* ------------------------------------------------------------------
+     Buttons & keyboard
+  ------------------------------------------------------------------ */
+  btnPrev.addEventListener('click', () => advance(-1));
+  btnNext.addEventListener('click', () => advance(1));
+
+  window.addEventListener('keydown', (e) => {
+    if (lb.classList.contains('open')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); advance(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); advance(-1); }
+  });
+
+  /* ------------------------------------------------------------------
+     Camera tilt — subtle parallax
+  ------------------------------------------------------------------ */
+  let targetRX = 0, targetRY = 0;
+  let currentRX = 0, currentRY = 0;
+  let tiltRaf = 0;
+
+  function tiltLoop() {
+    const dx = targetRX - currentRX;
+    const dy = targetRY - currentRY;
+
+    currentRX += dx * 0.075;
+    currentRY += dy * 0.075;
+
+    tunnel.style.transform =
+      `rotateX(${currentRX.toFixed(3)}deg) rotateY(${currentRY.toFixed(3)}deg)`;
+
+    if (Math.abs(dx) > 0.008 || Math.abs(dy) > 0.008) {
+      tiltRaf = requestAnimationFrame(tiltLoop);
+    } else {
+      tiltRaf = 0;
+    }
+  }
+
+  if (!noHover && !reduced) {
+    window.addEventListener('pointermove', (e) => {
+      const nx = (e.clientX / window.innerWidth  - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      targetRY =  nx * 4;
+      targetRX = -ny * 3;
+      if (!tiltRaf) tiltRaf = requestAnimationFrame(tiltLoop);
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------------------------------
+     Lightbox
+  ------------------------------------------------------------------ */
+  let lbIndex = -1;
+
+  function openLightbox(i) {
+    lbIndex = i;
+    const it = ITEMS[i];
+
+    lbImg.src = full(it.seed);
+    lbImg.alt = it.title;
+    lbTitle.textContent = it.title;
+    lbMeta.textContent = `${it.place} · ${it.year}`;
+
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lock');
+    lbX.focus({ preventScroll: true });
+  }
+
+  function closeLightbox() {
+    if (lbIndex === -1) return;
+    lbIndex = -1;
+
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lock');
+
+    window.setTimeout(() => {
+      if (lbIndex === -1) lbImg.removeAttribute('src');
+    }, 470);
+  }
+
+  function stepLb(dir) {
+    if (lbIndex === -1) return;
+    openLightbox((lbIndex + dir + N) % N);
+  }
+
+  lbX.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => stepLb(-1));
+  lbNext.addEventListener('click', () => stepLb(1));
+
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb) closeLightbox();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (lbIndex === -1) return;
+    if (e.key === 'Escape')     { e.preventDefault(); closeLightbox(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); stepLb(1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); stepLb(-1); }
+  });
+
+  viewBtn.addEventListener('click', () => openLightbox(order[0]));
+
+  /* ------------------------------------------------------------------
+     Entrance — cards fly in from the far end of the corridor
+  ------------------------------------------------------------------ */
+  function intro() {
+    /* all cards already sit deep in the hallway; send them to their slots */
+    requestAnimationFrame(() => {
+      order.forEach((idx, slot) => {
+        applySlot(idx, slot, true, slot * 90);
+      });
+
+      window.setTimeout(() => {
+        cards.forEach((el) => { el.style.transition = ''; });
+      }, 2400);
+    });
+
+    updateInfo();
+  }
+
+  /* ------------------------------------------------------------------
+     Boot
+  ------------------------------------------------------------------ */
+  intro();
+
+  window.addEventListener('resize', () => {
+    /* nothing to recompute — perspective handles the rest */
+  });
+
+})();
+</script>
+</body>
+</html>
