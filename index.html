@@ -340,8 +340,9 @@
   /* Keep the complete page navigation accessible on narrow screens. */
   .gallery-tabs { flex-wrap: wrap; }
 </style>
+  <link rel="stylesheet" href="assets/css/gallery-tools.css">
 </head>
-<body>
+<body class="features-gallery-page">
 
   <div class="grain" aria-hidden="true"></div>
   <div class="glow" id="glow" aria-hidden="true"></div>
@@ -360,11 +361,11 @@
 </nav>
 <p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
 
-    <div class="local-tools" aria-label="Local gallery tools">
-      <label class="local-tool-button upload-button" for="localImageUpload">＋ Upload images</label>
-      <input id="localImageUpload" class="visually-hidden" type="file" accept="image/*" multiple>
-      <button class="local-tool-button profile-button" id="profileOpen" type="button">Sign in</button>
-      <a class="local-tool-button profile-link" href="profile.html">Profile</a>
+    <div class="gallery-account-tools" id="galleryAccountTools" role="group" aria-label="Gallery tools">
+      <button class="gallery-tool-button" id="galleryUploadTrigger" type="button">＋ Upload</button>
+      <input id="localImageUpload" class="gallery-tool-input" type="file" accept="image/*" multiple aria-label="Choose images to upload">
+      <a class="gallery-tool-button" href="profile.html">Profile</a>
+      <a class="gallery-tool-button gallery-tool-button--primary" href="/auth/login?returnTo=%2Findex.html" aria-label="Sign in with MuseAI">Sign in</a>
     </div>
     <button class="reveal" id="reveal" type="button" aria-pressed="false">Reveal all</button>
   
@@ -378,24 +379,6 @@
 
   <main class="wall" id="wall" aria-label="Curated image gallery"></main>
 
-  <div class="local-modal" id="profileModal" hidden>
-    <button class="local-modal-scrim" type="button" data-profile-close aria-label="Close local profile"></button>
-    <section class="local-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <button class="local-modal-close" type="button" data-profile-close aria-label="Close">×</button>
-      <p class="local-eyebrow">THIS DEVICE ONLY</p>
-      <h2 id="profileTitle">Local profile</h2>
-      <p class="local-note">Choose a display name to personalize likes and comments. This prototype does not create an online account or ask for a password.</p>
-      <form id="profileForm" class="profile-form">
-        <label for="profileName">Display name</label>
-        <input id="profileName" name="displayName" type="text" maxlength="32" autocomplete="nickname" placeholder="e.g. Alex" required>
-        <div class="profile-form-actions">
-          <button class="local-tool-button" type="submit">Save on this device</button>
-          <button class="local-text-button" id="profileClear" type="button" hidden>Sign out</button>
-        </div>
-      </form>
-      <p class="local-note local-storage-note">Likes, comments, profile name, and uploads stay in this browser. Nothing is sent to a server.</p>
-    </section>
-  </div>
   <div class="local-toast" id="localToast" role="status" aria-live="polite"></div>
 
   <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
@@ -406,6 +389,16 @@
         <span class="lb-title" id="lbTitle"></span>
         <span class="lb-meta" id="lbMeta"></span>
       </figcaption>
+      <section class="lb-activity" aria-label="Image activity on this device">
+        <div class="lb-stats" aria-live="polite">
+          <div class="lb-stat"><strong id="lbLikes">0</strong><span>Likes</span></div>
+          <div class="lb-stat"><strong id="lbComments">0</strong><span>Comments</span></div>
+          <div class="lb-stat"><strong id="lbViews">0</strong><span>Views</span></div>
+          <div class="lb-stat"><strong id="lbDownloads">0</strong><span>Downloads</span></div>
+        </div>
+        <button class="lb-download-button" id="lbDownload" type="button">↓ Download image</button>
+        <p class="lb-local-note">Counts are saved in this browser only.</p>
+      </section>
     </figure>
   </div>
 
@@ -536,20 +529,22 @@
   const lbTitle = document.getElementById('lbTitle');
   const lbMeta  = document.getElementById('lbMeta');
   const lbClose = document.getElementById('lbClose');
+  const lbLikes = document.getElementById('lbLikes');
+  const lbComments = document.getElementById('lbComments');
+  const lbViews = document.getElementById('lbViews');
+  const lbDownloads = document.getElementById('lbDownloads');
+  const lbDownload = document.getElementById('lbDownload');
   const uploadInput = document.getElementById('localImageUpload');
-  const profileOpen = document.getElementById('profileOpen');
-  const profileModal = document.getElementById('profileModal');
-  const profileForm = document.getElementById('profileForm');
-  const profileName = document.getElementById('profileName');
-  const profileClear = document.getElementById('profileClear');
   const localToast = document.getElementById('localToast');
 
   const tiles = [];
   const galleryItems = [];
-  const LOCAL_KEYS = { likes: 'museai.local.likes.v1', comments: 'museai.local.comments.v1', profile: 'museai.local.profile.v1' };
+  const LOCAL_KEYS = { likes: 'museai.local.likes.v1', comments: 'museai.local.comments.v1', views: 'museai.local.views.v1', downloads: 'museai.local.downloads.v1', profile: 'museai.local.profile.v1' };
   const localState = {
     likes: readLocalJSON(LOCAL_KEYS.likes, {}),
     comments: readLocalJSON(LOCAL_KEYS.comments, {}),
+    views: readLocalJSON(LOCAL_KEYS.views, {}),
+    downloads: readLocalJSON(LOCAL_KEYS.downloads, {}),
     profile: readLocalJSON(LOCAL_KEYS.profile, null)
   };
   let toastTimer = 0;
@@ -583,17 +578,72 @@
   }
 
   function itemKey(item) { return item.id || item.seed; }
+  function metricCount(type, item) {
+    const count = Number(localState[type][itemKey(item)]);
+    return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+  }
+
   function commentList(item) {
     const list = localState.comments[itemKey(item)];
     return Array.isArray(list) ? list : [];
   }
 
-  function updateProfileButton() {
-    const name = localState.profile && localState.profile.name;
-    profileOpen.textContent = name ? name : 'Sign in';
-    profileOpen.setAttribute('aria-label', name ? `Local profile: ${name}` : 'Sign in to a local profile');
-    profileClear.hidden = !name;
-    profileName.value = name || '';
+  function syncMetrics(item) {
+    const key = itemKey(item);
+    const card = tiles.find(tile => tile.dataset.itemId === key);
+    const likes = localState.likes[key] ? 1 : 0;
+    const comments = commentList(item).length;
+    const views = metricCount('views', item);
+    const downloads = metricCount('downloads', item);
+    if (card) {
+      const like = card.querySelector('.like-button');
+      if (like) {
+        like.setAttribute('aria-pressed', String(Boolean(likes)));
+        like.classList.toggle('is-liked', Boolean(likes));
+        like.querySelector('.like-label').textContent = likes ? 'Liked' : 'Like';
+        like.querySelector('.like-count').textContent = String(likes);
+        like.querySelector('[aria-hidden="true"]').textContent = likes ? '♥' : '♡';
+      }
+      card.querySelector('.comment-count').textContent = String(comments);
+      card.querySelector('.tile-view-count').textContent = String(views);
+      card.querySelector('.tile-views').setAttribute('aria-label', `${views} local views`);
+      card.querySelector('.download-count').textContent = String(downloads);
+      card.querySelector('.tile-download').title = `${downloads} downloads on this device`;
+    }
+    if (lbIndex !== -1 && itemKey(galleryItems[lbIndex]) === key) {
+      lbLikes.textContent = String(likes);
+      lbComments.textContent = String(comments);
+      lbViews.textContent = String(views);
+      lbDownloads.textContent = String(downloads);
+    }
+  }
+
+  function incrementMetric(type, item) {
+    const key = itemKey(item);
+    localState[type][key] = metricCount(type, item) + 1;
+    writeLocalJSON(LOCAL_KEYS[type], localState[type]);
+    syncMetrics(item);
+  }
+
+  function downloadFilename(item) {
+    const base = (item.title || 'image').normalize('NFKD').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'image';
+    const path = new URL(full(item), location.href).pathname;
+    const pathExtension = path.match(/\.([a-z0-9]{2,5})$/i);
+    const mimeExtension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'image/svg+xml': 'svg' }[item.mimeType];
+    const extension = mimeExtension || (pathExtension && pathExtension[1]) || 'png';
+    return `${base}.${extension.toLowerCase()}`;
+  }
+
+  function downloadItem(item) {
+    const link = document.createElement('a');
+    link.href = full(item);
+    link.download = downloadFilename(item);
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    incrementMetric('downloads', item);
+    showToast(`Download started: ${item.title}`);
   }
 
   function setLiked(item, button) {
@@ -602,10 +652,7 @@
     if (liked) localState.likes[key] = true;
     else delete localState.likes[key];
     writeLocalJSON(LOCAL_KEYS.likes, localState.likes);
-    button.setAttribute('aria-pressed', String(liked));
-    button.classList.toggle('is-liked', liked);
-    button.querySelector('.like-label').textContent = liked ? 'Liked' : 'Like';
-    button.querySelector('.like-count').textContent = liked ? '1' : '0';
+    syncMetrics(item);
   }
 
   function renderComments(item, listEl, countEl) {
@@ -622,6 +669,7 @@
       listEl.appendChild(entry);
     });
     countEl.textContent = String(comments.length);
+    syncMetrics(item);
   }
 
   function renderTile(item, index, fresh = false) {
@@ -650,6 +698,12 @@
     chroma.decoding = 'async';
     chroma.src = thumb(item);
     media.append(base, chroma);
+    const viewBadge = document.createElement('span');
+    viewBadge.className = 'tile-views';
+    viewBadge.setAttribute('aria-label', `${metricCount('views', item)} local views`);
+    viewBadge.innerHTML = 'Views <span class="tile-view-count">0</span>';
+    viewBadge.querySelector('.tile-view-count').textContent = String(metricCount('views', item));
+    media.appendChild(viewBadge);
     media.addEventListener('click', () => openLightbox(index));
     media.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(index); }
@@ -697,7 +751,13 @@
     commentButton.type = 'button';
     commentButton.className = 'social-button comment-toggle';
     commentButton.innerHTML = 'Comment <span class="comment-count">0</span>';
-    actions.append(like, share, commentButton);
+    const download = document.createElement('button');
+    download.type = 'button';
+    download.className = 'social-button tile-download';
+    download.setAttribute('aria-label', `Download ${item.title}`);
+    download.innerHTML = '↓ Download <span class="download-count">0</span>';
+    download.addEventListener('click', () => downloadItem(item));
+    actions.append(like, share, commentButton, download);
 
     const panel = document.createElement('div');
     panel.className = 'comments-panel';
@@ -755,36 +815,6 @@
     galleryItems.forEach((item, i) => renderTile(item, i));
   }
   const galleryReady = initializeGallery();
-  updateProfileButton();
-
-  /* Local profile: display name only, never a real password or remote account. */
-  profileOpen.addEventListener('click', () => {
-    profileModal.hidden = false;
-    profileName.focus({ preventScroll: true });
-  });
-  profileModal.addEventListener('click', event => {
-    if (event.target.matches('[data-profile-close]')) profileModal.hidden = true;
-  });
-  profileForm.addEventListener('submit', event => {
-    event.preventDefault();
-    const name = profileName.value.trim().slice(0, 32);
-    if (!name) return;
-    localState.profile = { name };
-    writeLocalJSON(LOCAL_KEYS.profile, localState.profile);
-    updateProfileButton();
-    profileModal.hidden = true;
-    showToast(`Welcome, ${name}. Your profile is local to this browser.`);
-  });
-  profileClear.addEventListener('click', () => {
-    localState.profile = null;
-    try { localStorage.removeItem(LOCAL_KEYS.profile); } catch (_) {}
-    updateProfileButton();
-    profileModal.hidden = true;
-    showToast('Signed out of the local profile.');
-  });
-  window.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !profileModal.hidden) profileModal.hidden = true;
-  });
 
   /* Uploaded image files and blobs live only in this browser's IndexedDB. */
   const UPLOAD_DB = 'museai-local-gallery';
@@ -824,7 +854,7 @@
   }
   async function addUploadedItem(record, fresh = false) {
     await galleryReady;
-    const item = { id: record.id, seed: '', imageUrl: URL.createObjectURL(record.blob), title: record.title, category: 'Your uploads', ar: record.ar || 0.8 };
+    const item = { id: record.id, seed: '', imageUrl: URL.createObjectURL(record.blob), mimeType: record.blob.type, title: record.title, category: 'Your uploads', ar: record.ar || 0.8 };
     const index = galleryItems.push(item) - 1;
     renderTile(item, index, fresh);
   }
@@ -960,10 +990,13 @@
     lbIndex = i;
     const it = galleryItems[i];
 
+    incrementMetric('views', it);
+
     lbImg.src = full(it);
     lbImg.alt = it.title;
     lbTitle.textContent = it.title;
     lbMeta.textContent = `${it.category}`;
+    syncMetrics(it);
 
     lb.classList.add('open');
     lb.setAttribute('aria-hidden', 'false');
@@ -990,6 +1023,9 @@
   }
 
   lbClose.addEventListener('click', closeLightbox);
+  lbDownload.addEventListener('click', () => {
+    if (lbIndex !== -1) downloadItem(galleryItems[lbIndex]);
+  });
 
   lb.addEventListener('click', (e) => {
     if (e.target === lb) closeLightbox();
@@ -1046,6 +1082,7 @@
     </div>
   </section>
 </div>
+  <script src="assets/js/gallery-tools.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
