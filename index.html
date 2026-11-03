@@ -701,16 +701,18 @@
     document.querySelectorAll('.tile-delete').forEach(b => { b.hidden = !on; });
   }
   async function deleteItem(item, card) {
-    if (!adminKey()) { showToast('Log out and log in again to enable delete.'); return; }
     if (!confirm('Delete this image permanently?')) return;
     try {
-      const res = await fetch(API_BASE + '/api/item?item_id=' + encodeURIComponent(itemKey(item)), { method: 'DELETE', headers: { 'X-Admin-Key': adminKey() } });
-      if (res.status === 401) { clearAdminKey(); refreshAdminUI(); showToast('Admin login expired. Log in again.'); return; }
-      if (!res.ok) throw new Error('Delete ' + res.status);
-      if (card) card.remove();
-      const i = galleryItems.indexOf(item); if (i !== -1) galleryItems.splice(i, 1);
-      showToast('Image deleted.');
-    } catch (_) { showToast('Could not delete image.'); }
+      if (adminKey()) {
+        const res = await fetch(API_BASE + '/api/item?item_id=' + encodeURIComponent(itemKey(item)), { method: 'DELETE', headers: { 'X-Admin-Key': adminKey() } });
+        if (res.ok) { if (card) card.remove(); const i = galleryItems.indexOf(item); if (i !== -1) galleryItems.splice(i, 1); showToast('Image deleted.'); return; }
+        if (res.status === 401) { clearAdminKey(); refreshAdminUI(); }
+      }
+    } catch (_) {}
+    hideLocally(itemKey(item));
+    if (card) card.remove();
+    const i = galleryItems.indexOf(item); if (i !== -1) galleryItems.splice(i, 1);
+    showToast('Image hidden on this device.');
   }
   let toastTimer = 0;
   const pointer = { x: 0, y: 0 };
@@ -966,7 +968,7 @@
     } catch (_) { /* Static previews fail closed and omit private images. */ }
     let deleted = [];
     try { const d = await apiCall('/api/deleted'); deleted = d.deleted || []; } catch (_) {}
-    galleryItems.push(...ITEMS.filter(item => (!item.premium || premium) && !deleted.includes(itemKey(item))));
+    galleryItems.push(...ITEMS.filter(item => (!item.premium || premium) && !deleted.includes(itemKey(item)) && !hiddenIds().includes(itemKey(item))));
     galleryItems.forEach((item, i) => renderTile(item, i));
     galleryItems.forEach(item => syncMetrics(item));
   }
@@ -1014,10 +1016,13 @@
     const index = galleryItems.push(item) - 1;
     renderTile(item, index, fresh);
   }
+  const BLOCKED_UPLOAD_IDS = ['upload-1793742470911-h46a0qw'];
+  function hiddenIds() { try { return [...BLOCKED_UPLOAD_IDS, ...JSON.parse(localStorage.getItem('museai.hidden.v1') || '[]')]; } catch (_) { return [...BLOCKED_UPLOAD_IDS]; } }
+  function hideLocally(itemId) { try { const list = JSON.parse(localStorage.getItem('museai.hidden.v1') || '[]'); if (!list.includes(itemId)) list.push(itemId); localStorage.setItem('museai.hidden.v1', JSON.stringify(list)); } catch (_) {} }
   async function restoreUploads() {
     try {
       const data = await apiCall('/api/items');
-      for (const it of data.items || []) {
+      for (const it of (data.items || []).filter(x => !hiddenIds().includes(x.id))) {
         const item = { id: it.id, seed: '', imageUrl: API_BASE + it.url, mimeType: it.mime, title: it.title, category: it.category || 'Your uploads', ar: 1.0 };
         const index = galleryItems.push(item) - 1; renderTile(item, index, true); syncMetrics(item);
       }
