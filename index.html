@@ -340,6 +340,7 @@
   /* Keep the complete page navigation accessible on narrow screens. */
   .gallery-tabs { flex-wrap: wrap; }
 </style>
+  <link rel="stylesheet" href="assets/css/gallery-tools.css">
 </head>
 <body>
 
@@ -360,11 +361,11 @@
 </nav>
 <p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
 
-    <div class="local-tools" aria-label="Local gallery tools">
-      <label class="local-tool-button upload-button" for="localImageUpload">＋ Upload images</label>
-      <input id="localImageUpload" class="visually-hidden" type="file" accept="image/*" multiple>
-      <button class="local-tool-button profile-button" id="profileOpen" type="button">Sign in</button>
-      <a class="local-tool-button profile-link" href="profile.html">Profile</a>
+    <div class="gallery-account-tools" id="galleryAccountTools" role="group" aria-label="Gallery tools">
+      <button class="gallery-tool-button" id="galleryUploadTrigger" type="button">＋ Upload</button>
+      <input id="localImageUpload" class="gallery-tool-input" type="file" accept="image/*" multiple aria-label="Choose images to upload">
+      <a class="gallery-tool-button" href="profile.html">Profile</a>
+      <a class="gallery-tool-button gallery-tool-button--primary" href="/auth/login?returnTo=%2Findex.html" aria-label="Sign in with MuseAI">Sign in</a>
     </div>
     <button class="reveal" id="reveal" type="button" aria-pressed="false">Reveal all</button>
   
@@ -378,24 +379,6 @@
 
   <main class="wall" id="wall" aria-label="Curated image gallery"></main>
 
-  <div class="local-modal" id="profileModal" hidden>
-    <button class="local-modal-scrim" type="button" data-profile-close aria-label="Close local profile"></button>
-    <section class="local-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <button class="local-modal-close" type="button" data-profile-close aria-label="Close">×</button>
-      <p class="local-eyebrow">THIS DEVICE ONLY</p>
-      <h2 id="profileTitle">Local profile</h2>
-      <p class="local-note">Choose a display name to personalize likes and comments. This prototype does not create an online account or ask for a password.</p>
-      <form id="profileForm" class="profile-form">
-        <label for="profileName">Display name</label>
-        <input id="profileName" name="displayName" type="text" maxlength="32" autocomplete="nickname" placeholder="e.g. Alex" required>
-        <div class="profile-form-actions">
-          <button class="local-tool-button" type="submit">Save on this device</button>
-          <button class="local-text-button" id="profileClear" type="button" hidden>Sign out</button>
-        </div>
-      </form>
-      <p class="local-note local-storage-note">Likes, comments, profile name, and uploads stay in this browser. Nothing is sent to a server.</p>
-    </section>
-  </div>
   <div class="local-toast" id="localToast" role="status" aria-live="polite"></div>
 
   <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
@@ -537,11 +520,6 @@
   const lbMeta  = document.getElementById('lbMeta');
   const lbClose = document.getElementById('lbClose');
   const uploadInput = document.getElementById('localImageUpload');
-  const profileOpen = document.getElementById('profileOpen');
-  const profileModal = document.getElementById('profileModal');
-  const profileForm = document.getElementById('profileForm');
-  const profileName = document.getElementById('profileName');
-  const profileClear = document.getElementById('profileClear');
   const localToast = document.getElementById('localToast');
 
   const tiles = [];
@@ -586,14 +564,6 @@
   function commentList(item) {
     const list = localState.comments[itemKey(item)];
     return Array.isArray(list) ? list : [];
-  }
-
-  function updateProfileButton() {
-    const name = localState.profile && localState.profile.name;
-    profileOpen.textContent = name ? name : 'Sign in';
-    profileOpen.setAttribute('aria-label', name ? `Local profile: ${name}` : 'Sign in to a local profile');
-    profileClear.hidden = !name;
-    profileName.value = name || '';
   }
 
   function setLiked(item, button) {
@@ -755,36 +725,6 @@
     galleryItems.forEach((item, i) => renderTile(item, i));
   }
   const galleryReady = initializeGallery();
-  updateProfileButton();
-
-  /* Local profile: display name only, never a real password or remote account. */
-  profileOpen.addEventListener('click', () => {
-    profileModal.hidden = false;
-    profileName.focus({ preventScroll: true });
-  });
-  profileModal.addEventListener('click', event => {
-    if (event.target.matches('[data-profile-close]')) profileModal.hidden = true;
-  });
-  profileForm.addEventListener('submit', event => {
-    event.preventDefault();
-    const name = profileName.value.trim().slice(0, 32);
-    if (!name) return;
-    localState.profile = { name };
-    writeLocalJSON(LOCAL_KEYS.profile, localState.profile);
-    updateProfileButton();
-    profileModal.hidden = true;
-    showToast(`Welcome, ${name}. Your profile is local to this browser.`);
-  });
-  profileClear.addEventListener('click', () => {
-    localState.profile = null;
-    try { localStorage.removeItem(LOCAL_KEYS.profile); } catch (_) {}
-    updateProfileButton();
-    profileModal.hidden = true;
-    showToast('Signed out of the local profile.');
-  });
-  window.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !profileModal.hidden) profileModal.hidden = true;
-  });
 
   /* Uploaded image files and blobs live only in this browser's IndexedDB. */
   const UPLOAD_DB = 'museai-local-gallery';
@@ -1046,6 +986,7 @@
     </div>
   </section>
 </div>
+  <script src="assets/js/gallery-tools.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
