@@ -82,12 +82,32 @@
   // Its existing handler remains the single owner of upload persistence there.
   if (document.getElementById('wall')) return;
 
+  const ACTIVITY_KEYS = {
+    likes: 'museai.local.likes.v1',
+    comments: 'museai.local.comments.v1',
+    views: 'museai.local.views.v1',
+    downloads: 'museai.local.downloads.v1'
+  };
+  function readActivityMap(key) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || '{}');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (_) { return {}; }
+  }
+  const activity = Object.fromEntries(Object.entries(ACTIVITY_KEYS).map(([name, key]) => [name, readActivityMap(key)]));
+
   let inMemoryUploads = [];
   let storedUploads = [];
   let objectUrls = [];
   let panel;
   let launcher;
   let grid;
+  let viewer;
+  let viewerImage;
+  let viewerTitle;
+  let viewerClose;
+  let viewerOpener = null;
+  let activeUpload = null;
   let status = document.getElementById('galleryToolStatus');
   if (!status) {
     status = document.createElement('p');
@@ -168,6 +188,7 @@
     panel.innerHTML = '<div class="gallery-uploads-heading"><div><h2>Your uploads</h2><p>Images stay in this browser and are not sent to a server.</p></div><button class="gallery-profile-close" type="button" data-gallery-uploads-close aria-label="Close uploads">×</button></div><div class="gallery-uploads-grid"></div>';
     grid = panel.querySelector('.gallery-uploads-grid');
     document.body.append(launcher, panel);
+    buildViewer();
 
     const setOpen = open => {
       panel.hidden = !open;
@@ -182,6 +203,123 @@
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && !panel.hidden) setOpen(false);
     });
+  }
+
+  function uploadKey(upload) { return upload.id; }
+  function uploadComments(upload) {
+    const list = activity.comments[uploadKey(upload)];
+    return Array.isArray(list) ? list : [];
+  }
+  function activityCount(type, upload) {
+    const count = Number(activity[type][uploadKey(upload)]);
+    return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+  }
+  function saveActivity(type) {
+    try { localStorage.setItem(ACTIVITY_KEYS[type], JSON.stringify(activity[type])); }
+    catch (_) { announce('Browser storage is unavailable; activity changes last only for this session.'); }
+  }
+  function refreshUploadActivity(upload, card) {
+    const key = uploadKey(upload);
+    const target = card || Array.from(grid.querySelectorAll('.gallery-upload-card')).find(item => item.dataset.uploadId === key);
+    const liked = Boolean(activity.likes[key]);
+    const comments = uploadComments(upload).length;
+    const views = activityCount('views', upload);
+    const downloads = activityCount('downloads', upload);
+    if (target) {
+      const like = target.querySelector('.gallery-upload-like');
+      like.setAttribute('aria-pressed', String(liked));
+      like.classList.toggle('is-liked', liked);
+      like.querySelector('[aria-hidden="true"]').textContent = liked ? '♥' : '♡';
+      like.querySelector('[data-upload-likes]').textContent = liked ? '1' : '0';
+      like.querySelector('.gallery-upload-like-label').textContent = liked ? 'Liked' : 'Like';
+      target.querySelector('[data-upload-comments]').textContent = String(comments);
+      target.querySelector('[data-upload-views]').textContent = String(views);
+      target.querySelector('[data-upload-download-summary]').textContent = String(downloads);
+      target.querySelector('[data-upload-downloads]').textContent = String(downloads);
+    }
+    if (activeUpload && uploadKey(activeUpload) === key && viewer && !viewer.hidden) {
+      viewer.querySelector('[data-viewer-likes]').textContent = String(liked ? 1 : 0);
+      viewer.querySelector('[data-viewer-comments]').textContent = String(comments);
+      viewer.querySelector('[data-viewer-views]').textContent = String(views);
+      viewer.querySelector('[data-viewer-downloads]').textContent = String(downloads);
+    }
+  }
+  function incrementActivity(type, upload) {
+    const key = uploadKey(upload);
+    activity[type][key] = activityCount(type, upload) + 1;
+    saveActivity(type);
+    refreshUploadActivity(upload);
+  }
+  function downloadName(upload) {
+    const base = (upload.title || 'image').normalize('NFKD').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'image';
+    const extensions = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'image/svg+xml': 'svg' };
+    const extension = extensions[upload.blob && upload.blob.type] || 'png';
+    return `${base}.${extension}`;
+  }
+  function downloadUpload(upload, url) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = downloadName(upload);
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    incrementActivity('downloads', upload);
+    announce(`Download started: ${upload.title || 'image'}`);
+  }
+  function renderUploadComments(upload, list) {
+    list.replaceChildren();
+    uploadComments(upload).forEach(comment => {
+      const entry = document.createElement('p');
+      entry.className = 'gallery-upload-comment';
+      const author = document.createElement('strong');
+      const profile = readProfile();
+      author.textContent = comment.author || (profile && profile.name) || 'You';
+      const text = document.createElement('span');
+      text.textContent = comment.text || '';
+      entry.append(author, text);
+      list.appendChild(entry);
+    });
+  }
+  function buildViewer() {
+    if (viewer) return;
+    viewer = document.createElement('section');
+    viewer.className = 'gallery-upload-viewer';
+    viewer.hidden = true;
+    viewer.setAttribute('role', 'dialog');
+    viewer.setAttribute('aria-modal', 'true');
+    viewer.setAttribute('aria-label', 'Uploaded image viewer');
+    viewer.innerHTML = '<div class="gallery-upload-viewer-scrim" data-upload-viewer-close></div><div class="gallery-upload-viewer-card"><button class="gallery-profile-close" type="button" data-upload-viewer-close aria-label="Close image viewer">×</button><img class="gallery-upload-viewer-image" alt=""><h2 class="gallery-upload-viewer-title"></h2><div class="gallery-upload-viewer-stats" aria-live="polite"><span>Likes <strong data-viewer-likes>0</strong></span><span>Comments <strong data-viewer-comments>0</strong></span><span>Views <strong data-viewer-views>0</strong></span><span>Downloads <strong data-viewer-downloads>0</strong></span></div><button class="gallery-tool-button gallery-upload-viewer-download" type="button">↓ Download image</button><p class="gallery-upload-viewer-note">Counts are saved in this browser only.</p></div>';
+    viewerImage = viewer.querySelector('.gallery-upload-viewer-image');
+    viewerTitle = viewer.querySelector('.gallery-upload-viewer-title');
+    viewerClose = viewer.querySelector('[data-upload-viewer-close].gallery-profile-close');
+    viewer.addEventListener('click', event => {
+      if (event.target === viewer || event.target.matches('[data-upload-viewer-close]')) closeViewer();
+    });
+    viewer.querySelector('.gallery-upload-viewer-download').addEventListener('click', () => {
+      if (activeUpload) downloadUpload(activeUpload, viewerImage.src);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && viewer && !viewer.hidden) closeViewer();
+    });
+    document.body.appendChild(viewer);
+  }
+  function openViewer(upload, url, opener) {
+    activeUpload = upload;
+    viewerOpener = opener;
+    viewerImage.src = url;
+    viewerImage.alt = upload.title || 'Uploaded image';
+    viewerTitle.textContent = upload.title || 'Untitled upload';
+    viewer.hidden = false;
+    incrementActivity('views', upload);
+    viewerClose.focus({ preventScroll: true });
+  }
+  function closeViewer() {
+    if (!viewer || viewer.hidden) return;
+    viewer.hidden = true;
+    viewerImage.removeAttribute('src');
+    activeUpload = null;
+    if (viewerOpener && viewerOpener.isConnected) viewerOpener.focus({ preventScroll: true });
   }
 
   function renderUploads(open = false) {
@@ -202,15 +340,87 @@
       for (const upload of uploads) {
         const figure = document.createElement('figure');
         figure.className = 'gallery-upload-card';
+        figure.dataset.uploadId = uploadKey(upload);
+        const preview = document.createElement('button');
+        preview.type = 'button';
+        preview.className = 'gallery-upload-preview';
+        preview.setAttribute('aria-label', `Open ${upload.title || 'uploaded image'}`);
         const image = document.createElement('img');
         image.alt = upload.title || 'Uploaded image';
         image.loading = 'lazy';
         const url = URL.createObjectURL(upload.blob);
         objectUrls.push(url);
         image.src = url;
+        preview.appendChild(image);
+        preview.addEventListener('click', () => openViewer(upload, url, preview));
         const caption = document.createElement('figcaption');
         caption.textContent = upload.title || 'Untitled upload';
-        figure.append(image, caption);
+        const summary = document.createElement('p');
+        summary.className = 'gallery-upload-summary';
+        summary.innerHTML = 'Views <strong data-upload-views>0</strong><span aria-hidden="true"> · </span>Downloads <strong data-upload-download-summary>0</strong>';
+        const actions = document.createElement('div');
+        actions.className = 'gallery-upload-actions';
+        const like = document.createElement('button');
+        like.type = 'button';
+        like.className = 'gallery-upload-action gallery-upload-like';
+        like.innerHTML = '<span aria-hidden="true">♡</span> <span class="gallery-upload-like-label">Like</span> <strong data-upload-likes>0</strong>';
+        like.addEventListener('click', () => {
+          const key = uploadKey(upload);
+          if (activity.likes[key]) delete activity.likes[key];
+          else activity.likes[key] = true;
+          saveActivity('likes');
+          refreshUploadActivity(upload, figure);
+        });
+        const commentToggle = document.createElement('button');
+        commentToggle.type = 'button';
+        commentToggle.className = 'gallery-upload-action gallery-upload-comment-toggle';
+        commentToggle.innerHTML = 'Comment <strong data-upload-comments>0</strong>';
+        const download = document.createElement('button');
+        download.type = 'button';
+        download.className = 'gallery-upload-action gallery-upload-download';
+        download.innerHTML = '↓ Download <strong data-upload-downloads>0</strong>';
+        download.addEventListener('click', () => downloadUpload(upload, url));
+        actions.append(like, commentToggle, download);
+        const commentsPanel = document.createElement('div');
+        commentsPanel.className = 'gallery-upload-comments-panel';
+        commentsPanel.hidden = true;
+        const commentList = document.createElement('div');
+        commentList.className = 'gallery-upload-comment-list';
+        const commentForm = document.createElement('form');
+        commentForm.className = 'gallery-upload-comment-form';
+        const commentInput = document.createElement('textarea');
+        commentInput.maxLength = 500;
+        commentInput.required = true;
+        commentInput.rows = 2;
+        commentInput.placeholder = 'Add a comment…';
+        commentInput.setAttribute('aria-label', `Comment on ${upload.title || 'uploaded image'}`);
+        const post = document.createElement('button');
+        post.type = 'submit';
+        post.className = 'gallery-upload-action';
+        post.textContent = 'Post';
+        commentForm.append(commentInput, post);
+        commentForm.addEventListener('submit', event => {
+          event.preventDefault();
+          const text = commentInput.value.trim();
+          if (!text) return;
+          const key = uploadKey(upload);
+          const existing = uploadComments(upload);
+          const profile = readProfile();
+          existing.push({ author: (profile && profile.name) || 'You', text, createdAt: new Date().toISOString() });
+          activity.comments[key] = existing;
+          saveActivity('comments');
+          commentInput.value = '';
+          renderUploadComments(upload, commentList);
+          refreshUploadActivity(upload, figure);
+        });
+        commentToggle.addEventListener('click', () => {
+          commentsPanel.hidden = !commentsPanel.hidden;
+          if (!commentsPanel.hidden) commentInput.focus({ preventScroll: true });
+        });
+        commentsPanel.append(commentList, commentForm);
+        figure.append(preview, caption, summary, actions, commentsPanel);
+        renderUploadComments(upload, commentList);
+        refreshUploadActivity(upload, figure);
         grid.appendChild(figure);
       }
     }
