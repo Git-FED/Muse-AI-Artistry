@@ -405,7 +405,6 @@
       <button class="login-btn" id="loginBtn" title="Login"><span class="user-avatar" id="userAvatar">👤</span><span id="loginBtnText">Login</span></button>
       <input id="localImageUpload" class="gallery-tool-input" type="file" accept="image/*" multiple aria-label="Choose images to upload">
       <a class="gallery-tool-button" href="profile.html">Profile</a>
-      <a class="gallery-tool-button gallery-tool-button--primary" href="/auth/login?returnTo=%2Findex.html" aria-label="Sign in with MuseAI">Sign in</a>
     </div>
     <button class="reveal" id="reveal" type="button" aria-pressed="false">Reveal all</button>
   
@@ -696,14 +695,13 @@
   function adminKey() { return localStorage.getItem('museai.admin.v1') || sessionStorage.getItem('museai.admin.v1') || ''; }
   function clearAdminKey() { localStorage.removeItem('museai.admin.v1'); sessionStorage.removeItem('museai.admin.v1'); }
   function refreshAdminUI() {
-    const on = Boolean(adminKey());
+    const lb = document.getElementById('loginBtn');
+    const loggedIn = lb ? lb.classList.contains('logged-in') : false;
+    const on = loggedIn && Boolean(adminKey());
     document.querySelectorAll('.tile-delete').forEach(b => { b.hidden = !on; });
-    const lb = document.getElementById('loginBtn'); if (lb) lb.classList.toggle('logged-in', on);
-    const lt = document.getElementById('loginBtnText'); if (lt && !on) lt.textContent = 'Login';
-    const av = document.getElementById('userAvatar'); if (av && !on) av.textContent = '👤';
   }
   async function deleteItem(item, card) {
-    if (!adminKey()) { showToast('Admin login required to delete.'); return; }
+    if (!adminKey()) { showToast('Log out and log in again to enable delete.'); return; }
     if (!confirm('Delete this image permanently?')) return;
     try {
       const res = await fetch(API_BASE + '/api/item?item_id=' + encodeURIComponent(itemKey(item)), { method: 'DELETE', headers: { 'X-Admin-Key': adminKey() } });
