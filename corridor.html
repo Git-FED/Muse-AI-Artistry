@@ -388,12 +388,22 @@
     .gallery-tabs { gap: 4px; margin-top: 6px; }
     .gallery-tabs a { min-height: 30px; padding: 6px 9px; font-size: 8px; }
   }
+  body.premium-pending .stage-wrap,
+  body.premium-pending .foot,
+  body.premium-pending .lb { visibility: hidden; }
+  .premium-access-status { position: fixed; z-index: 80; inset: 50% auto auto 50%; width: min(92vw, 520px); transform: translate(-50%, -50%); padding: 24px; border: 1px solid rgba(143,168,216,.35); border-radius: 18px; background: rgba(10,12,19,.96); color: #dce5f5; font: 14px/1.7 ui-sans-serif,system-ui,sans-serif; text-align: center; }
+  .premium-access-status a { color: #a9efff; }
+  body:not(.premium-pending) .premium-access-status { display: none; }
 </style>
 </head>
-<body>
+<body class="premium-pending">
 
   <div class="grain" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
+  <div id="premium-access-status" class="premium-access-status" role="status" aria-live="polite">
+    <span id="premium-access-copy">Checking your Premium membership…</span><br>
+    <a id="premium-access-link" href="premium-gate.html" hidden>Sign in or subscribe</a>
+  </div>
 
   <header class="bar">
     <div class="brand">Corridor<span>·</span>Archive</div>
@@ -407,8 +417,6 @@
       <a href="prism.html">Avatars</a>
       <a href="projects.html">Projects</a>
       <a href="corridor.html" aria-current="page">Premium</a>
-      <a href="profile.html">Profile</a>
-      <a href="deck.html">Portfolio</a>
 </nav>
 <p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
 
@@ -448,23 +456,37 @@
   </div>
 
 <script>
-(() => {
+ (async () => {
+  const notice = document.getElementById('premium-access-copy');
+  const accessLink = document.getElementById('premium-access-link');
+  try {
+    const response = await fetch('/api/entitlement', { credentials: 'same-origin', cache: 'no-store' });
+    const state = response.ok ? await response.json() : null;
+    if (!state || state.premium !== true) throw new Error('Membership not verified');
+    document.body.classList.remove('premium-pending');
+    document.getElementById('premium-access-status').hidden = true;
+  } catch (_) {
+    notice.textContent = 'Premium could not be verified. The gallery remains locked.';
+    accessLink.hidden = false;
+    return;
+  }
+  (() => {
   "use strict";
 
   /* ------------------------------------------------------------------
      Collection
   ------------------------------------------------------------------ */
   const ITEMS = [
-    { seed: "assets/gallery-images/fed-edu-simple-login-1.webp", title: "Fed-EDU Simple Login 1", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-simple-login-2.webp", title: "Fed-EDU Simple Login 2", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-simple-login-3.webp", title: "Fed-EDU Simple Login 3", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-simple-login-4.webp", title: "Fed-EDU Simple Login 4", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-simple-login-5.webp", title: "Fed-EDU Simple Login 5", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-variation-1.webp", title: "Fed-EDU Variation 1", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-variation-2.webp", title: "Fed-EDU Variation 2", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-variation-3.webp", title: "Fed-EDU Variation 3", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-variation-4.webp", title: "Fed-EDU Variation 4", category: "Fed-EDU onboarding" },
-    { seed: "assets/gallery-images/fed-edu-variation-5.webp", title: "Fed-EDU Variation 5", category: "Fed-EDU onboarding" }
+    { seed: "/premium-assets/fed-edu-simple-login-1.webp", title: "Fed-EDU Simple Login 1", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-simple-login-2.webp", title: "Fed-EDU Simple Login 2", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-simple-login-3.webp", title: "Fed-EDU Simple Login 3", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-simple-login-4.webp", title: "Fed-EDU Simple Login 4", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-simple-login-5.webp", title: "Fed-EDU Simple Login 5", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-variation-1.webp", title: "Fed-EDU Variation 1", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-variation-2.webp", title: "Fed-EDU Variation 2", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-variation-3.webp", title: "Fed-EDU Variation 3", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-variation-4.webp", title: "Fed-EDU Variation 4", category: "Fed-EDU onboarding" },
+    { seed: "/premium-assets/fed-edu-variation-5.webp", title: "Fed-EDU Variation 5", category: "Fed-EDU onboarding" }
   ];
 
   const N = ITEMS.length;
@@ -832,6 +854,7 @@
   });
 
 })();
+})();
 </script>
 <footer class="museai-site-footer" role="contentinfo">
   <span class="museai-footer-brand">MUSEAI · STUDIO</span>
@@ -849,10 +872,10 @@
     <button class="museai-close" type="button" aria-label="Close" data-museai-close>×</button>
     <p class="museai-eyebrow">KEEP THE IDEAS MOVING</p>
     <h2 id="museai-support-title">Support the MuseAI archive</h2>
-    <p class="museai-copy">Payment choices are hidden until you complete the age check. Your date of birth is checked in this browser and is not saved or sent by this page.</p>
+    <p class="museai-copy">Optional support links are hidden until you complete the age check. These contributions do not unlock Premium; use the Premium tab for verified membership checkout.</p>
     <div class="museai-age-intro" id="museai-age-intro">
-      <p>Confirm that you are at least 18 to view payment options.</p>
-      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view options <span aria-hidden="true">↗</span></button>
+      <p>Confirm that you are at least 18 to view optional support links.</p>
+      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view support links <span aria-hidden="true">↗</span></button>
       <p class="museai-fineprint">This is a client-side age check, not identity verification. It is not a substitute for legal or payment-provider requirements.</p>
     </div>
     <div class="museai-age-form-wrap" id="museai-age-form-wrap" hidden>
@@ -864,14 +887,14 @@
       </form>
     </div>
     <div class="museai-payment-options" id="museai-payment-options" hidden>
-      <p class="museai-unlocked">Age check complete · payment providers load below</p>
-      <h3>Choose a way to support</h3>
+      <p class="museai-unlocked">Age check complete · optional support links below</p>
+      <h3>Choose an optional support link</h3>
       <div class="museai-paygrid">
-        <article class="museai-paycard"><h4>PayPal subscription</h4><div id="paypal-button-container-P-4FD24238VX4902214NK2XP2Y"></div></article>
-        <article class="museai-paycard"><h4>Card via Stripe</h4><div id="stripe-button-container"></div></article>
+        <a class="museai-support-link" href="https://github.com/sponsors/Git-FED" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+        <a class="museai-support-link" href="https://nowpayments.io/payment/?iid=5997958570&amp;source=button" target="_blank" rel="noopener noreferrer">NOWPayments</a>
       </div>
       <a class="museai-coffee-link" href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20book&emoji=%F0%9F%93%96&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a book on Buy Me a Coffee"></a>
-      <p class="museai-fineprint">Payment terms and amounts are shown by the payment provider before checkout. Support is optional.</p>
+      <p class="museai-fineprint">Contributions through these external support links do not unlock Premium.</p>
     </div>
   </section>
 </div>

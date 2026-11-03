@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07070a">
+  <title>Premium access — MuseAI</title>
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/paywall.css">
+</head>
+<body>
+  <header class="paywall-header">
+    <a class="paywall-brand" href="index.html">MUSEAI <span>·</span> LUMEN</a>
+    <nav aria-label="Gallery pages">
+      <a href="index.html">Features</a>
+      <a href="exclusives.html">Exclusives</a>
+      <a href="memories.html">Feed</a>
+      <a href="orbital-gallery.html">Explore</a>
+      <a href="prism.html">Avatars</a>
+      <a href="projects.html">Projects</a>
+      <a aria-current="page" href="premium-gate.html">Premium</a>
+    </nav>
+  </header>
+  <main class="paywall-shell">
+    <section class="paywall-card" aria-labelledby="premium-title">
+      <p class="paywall-eyebrow">MEMBERS-ONLY ARCHIVE</p>
+      <h1 id="premium-title">Unlock the Premium gallery</h1>
+      <p class="paywall-lede">Sign in with MuseAI, then choose a verified subscription checkout. Premium remains locked until the server confirms an active subscription with the payment provider.</p>
+      <p id="paywall-status" class="paywall-status" role="status" aria-live="polite">Checking sign-in and membership…</p>
+
+      <div class="paywall-actions">
+        <a class="paywall-primary" id="muse-signin" href="/auth/login?returnTo=%2Fpremium-gate.html">Sign in with MuseAI</a>
+        <button class="paywall-secondary" id="muse-signout" type="button" hidden>Sign out</button>
+        <a class="paywall-primary" id="open-premium" href="corridor.html" hidden>Open Premium gallery</a>
+      </div>
+
+      <form id="age-form" class="paywall-age" hidden>
+        <label for="birth-date">Date of birth</label>
+        <input id="birth-date" name="birthDate" type="date" required autocomplete="bday" max="9999-12-31">
+        <p id="age-error" class="paywall-error" aria-live="polite"></p>
+        <button class="paywall-primary" type="submit">Continue to payment options</button>
+        <p class="paywall-fine">This date is checked in this browser and is not sent to the site. This check is not identity verification and does not establish legal compliance.</p>
+      </form>
+
+      <section id="checkout-options" class="paywall-checkout" hidden aria-labelledby="checkout-title">
+        <h2 id="checkout-title">Choose your subscription method</h2>
+        <div class="paywall-payment-grid">
+          <article class="paywall-payment-card">
+            <h3>PayPal subscription</h3>
+            <div id="paypal-button-container" aria-label="PayPal membership checkout"></div>
+            <p class="paywall-provider-note" id="paypal-note"></p>
+          </article>
+          <article class="paywall-payment-card">
+            <h3>Card via Stripe</h3>
+            <div id="premium-stripe-button-container" aria-label="Card membership checkout"></div>
+            <p class="paywall-provider-note" id="stripe-note"></p>
+          </article>
+        </div>
+        <p class="paywall-fine">The price, billing interval, cancellation terms, and any applicable taxes are shown by the provider before you confirm. A return from checkout alone does not unlock Premium; the provider's active subscription must be verified.</p>
+      </section>
+
+      <section class="paywall-support" aria-labelledby="support-title">
+        <h2 id="support-title">Other ways to support the archive</h2>
+        <p>These contributions are separate from a Premium subscription and do not unlock the gallery.</p>
+        <div class="paywall-support-links">
+          <a href="https://github.com/sponsors/Git-FED" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+          <a href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer">Buy Me a Book</a>
+          <a href="https://nowpayments.io/payment/?iid=5997958570&amp;source=button" target="_blank" rel="noopener noreferrer">NOWPayments</a>
+        </div>
+      </section>
+
+      <p class="paywall-contact">Questions? <a href="mailto:support@fedpromptly.com">support@fedpromptly.com</a></p>
+    </section>
+  </main>
+  <footer class="paywall-contact-links" aria-label="Contact emails">
+    <a href="mailto:careers@fedpromptly.com">careers@fedpromptly.com</a>
+    <a href="mailto:support@fedpromptly.com">support@fedpromptly.com</a>
+    <a href="mailto:business@fedpromptly.com">business@fedpromptly.com</a>
+    <a href="mailto:contact@fedpromptly.com">contact@fedpromptly.com</a>
+  </footer>
+  <script src="assets/js/paywall.js" defer></script>
+</body>
+</html>

@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/local-gallery.css">
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -356,11 +357,15 @@
       <a href="prism.html">Avatars</a>
       <a href="projects.html">Projects</a>
       <a href="corridor.html">Premium</a>
-      <a href="profile.html">Profile</a>
-      <a href="deck.html">Portfolio</a>
 </nav>
 <p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
 
+    <div class="local-tools" aria-label="Local gallery tools">
+      <label class="local-tool-button upload-button" for="localImageUpload">＋ Upload images</label>
+      <input id="localImageUpload" class="visually-hidden" type="file" accept="image/*" multiple>
+      <button class="local-tool-button profile-button" id="profileOpen" type="button">Sign in</button>
+      <a class="local-tool-button profile-link" href="profile.html">Profile</a>
+    </div>
     <button class="reveal" id="reveal" type="button" aria-pressed="false">Reveal all</button>
   
     <div class="museai-ticker" role="note" aria-label="MuseAI studio ticker: imagination in motion, tiny robots and big ideas, make room to imagine">
@@ -371,7 +376,27 @@
     </div>
   </header>
 
-  <main class="wall" id="wall" aria-label="Complete archive of 103 packaged images"></main>
+  <main class="wall" id="wall" aria-label="Curated image gallery"></main>
+
+  <div class="local-modal" id="profileModal" hidden>
+    <button class="local-modal-scrim" type="button" data-profile-close aria-label="Close local profile"></button>
+    <section class="local-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <button class="local-modal-close" type="button" data-profile-close aria-label="Close">×</button>
+      <p class="local-eyebrow">THIS DEVICE ONLY</p>
+      <h2 id="profileTitle">Local profile</h2>
+      <p class="local-note">Choose a display name to personalize likes and comments. This prototype does not create an online account or ask for a password.</p>
+      <form id="profileForm" class="profile-form">
+        <label for="profileName">Display name</label>
+        <input id="profileName" name="displayName" type="text" maxlength="32" autocomplete="nickname" placeholder="e.g. Alex" required>
+        <div class="profile-form-actions">
+          <button class="local-tool-button" type="submit">Save on this device</button>
+          <button class="local-text-button" id="profileClear" type="button" hidden>Sign out</button>
+        </div>
+      </form>
+      <p class="local-note local-storage-note">Likes, comments, profile name, and uploads stay in this browser. Nothing is sent to a server.</p>
+    </section>
+  </div>
+  <div class="local-toast" id="localToast" role="status" aria-live="polite"></div>
 
   <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
     <button class="lb-close" id="lbClose" type="button" aria-label="Close viewer">✕</button>
@@ -404,16 +429,16 @@
     {"seed": "assets/gallery-images/fed-edu-friendly-login-5.webp", "title": "Fed-EDU Friendly Login 5", "category": "Fed-EDU onboarding", "ar": 1.777778},
     {"seed": "assets/gallery-images/promo-horizontal-2.webp", "title": "Promo Horizontal (2)", "category": "Product promo", "ar": 1.777778},
     {"seed": "assets/gallery-images/muse-relay-05-any-file-type.webp", "title": "Muse Relay 05 Any File Type", "category": "MuseAI feature illustration", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-simple-login-1.webp", "title": "Fed-EDU Simple Login 1", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-simple-login-2.webp", "title": "Fed-EDU Simple Login 2", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-simple-login-3.webp", "title": "Fed-EDU Simple Login 3", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-simple-login-4.webp", "title": "Fed-EDU Simple Login 4", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-simple-login-5.webp", "title": "Fed-EDU Simple Login 5", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-variation-1.webp", "title": "Fed-EDU Variation 1", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-variation-2.webp", "title": "Fed-EDU Variation 2", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-variation-3.webp", "title": "Fed-EDU Variation 3", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-variation-4.webp", "title": "Fed-EDU Variation 4", "category": "Fed-EDU onboarding", "ar": 1.777778},
-    {"seed": "assets/gallery-images/fed-edu-variation-5.webp", "title": "Fed-EDU Variation 5", "category": "Fed-EDU onboarding", "ar": 1.777778},
+    {"seed": "/premium-assets/fed-edu-simple-login-1.webp", "title": "Fed-EDU Simple Login 1", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-simple-login-2.webp", "title": "Fed-EDU Simple Login 2", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-simple-login-3.webp", "title": "Fed-EDU Simple Login 3", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-simple-login-4.webp", "title": "Fed-EDU Simple Login 4", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-simple-login-5.webp", "title": "Fed-EDU Simple Login 5", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-variation-1.webp", "title": "Fed-EDU Variation 1", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-variation-2.webp", "title": "Fed-EDU Variation 2", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-variation-3.webp", "title": "Fed-EDU Variation 3", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-variation-4.webp", "title": "Fed-EDU Variation 4", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
+    {"seed": "/premium-assets/fed-edu-variation-5.webp", "title": "Fed-EDU Variation 5", "category": "Fed-EDU onboarding", "ar": 1.777778, "premium": true},
     {"seed": "assets/gallery-images/simple-07-traffic-cop.webp", "title": "Simple 07 Traffic Cop", "category": "Concept illustration", "ar": 1.777778},
     {"seed": "assets/gallery-images/simple-10-elevator.webp", "title": "Simple 10 Elevator", "category": "Concept illustration", "ar": 1.777778},
     {"seed": "assets/gallery-images/simple-05-idea-checkout.webp", "title": "Simple 05 Idea Checkout", "category": "Concept illustration", "ar": 1.777778},
@@ -496,8 +521,8 @@
     {"seed": "favicon.ico", "title": "Site favicon ICO", "category": "Brand artwork", "ar": 1.0},
     {"seed": "social-image.png", "title": "Social preview artwork", "category": "Brand artwork", "ar": 2.0}
   ];
-  const thumb = it => it.seed;
-  const full  = it => it.seed;
+  const thumb = it => it.imageUrl || it.seed;
+  const full  = it => it.imageUrl || it.seed;
 
   /* ------------------------------------------------------------------
      Elements & state
@@ -511,8 +536,23 @@
   const lbTitle = document.getElementById('lbTitle');
   const lbMeta  = document.getElementById('lbMeta');
   const lbClose = document.getElementById('lbClose');
+  const uploadInput = document.getElementById('localImageUpload');
+  const profileOpen = document.getElementById('profileOpen');
+  const profileModal = document.getElementById('profileModal');
+  const profileForm = document.getElementById('profileForm');
+  const profileName = document.getElementById('profileName');
+  const profileClear = document.getElementById('profileClear');
+  const localToast = document.getElementById('localToast');
 
   const tiles = [];
+  const galleryItems = [];
+  const LOCAL_KEYS = { likes: 'museai.local.likes.v1', comments: 'museai.local.comments.v1', profile: 'museai.local.profile.v1' };
+  const localState = {
+    likes: readLocalJSON(LOCAL_KEYS.likes, {}),
+    comments: readLocalJSON(LOCAL_KEYS.comments, {}),
+    profile: readLocalJSON(LOCAL_KEYS.profile, null)
+  };
+  let toastTimer = 0;
   const pointer = { x: 0, y: 0 };
   let hasPointer = false;
   let moveRaf = 0;
@@ -523,24 +563,85 @@
   if (isTouch) document.body.classList.add('touch');
 
   /* ------------------------------------------------------------------
-     Build the wall
+     Local-only state, interactions, and gallery cards
   ------------------------------------------------------------------ */
-  ITEMS.forEach((item, i) => {
+  function readLocalJSON(key, fallback) {
+    try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; }
+    catch (_) { return fallback; }
+  }
+
+  function writeLocalJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (_) { showToast('Browser storage is unavailable; changes last only for this session.'); return false; }
+  }
+
+  function showToast(message) {
+    localToast.textContent = message;
+    localToast.classList.add('visible');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => localToast.classList.remove('visible'), 2800);
+  }
+
+  function itemKey(item) { return item.id || item.seed; }
+  function commentList(item) {
+    const list = localState.comments[itemKey(item)];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function updateProfileButton() {
+    const name = localState.profile && localState.profile.name;
+    profileOpen.textContent = name ? name : 'Sign in';
+    profileOpen.setAttribute('aria-label', name ? `Local profile: ${name}` : 'Sign in to a local profile');
+    profileClear.hidden = !name;
+    profileName.value = name || '';
+  }
+
+  function setLiked(item, button) {
+    const key = itemKey(item);
+    const liked = !localState.likes[key];
+    if (liked) localState.likes[key] = true;
+    else delete localState.likes[key];
+    writeLocalJSON(LOCAL_KEYS.likes, localState.likes);
+    button.setAttribute('aria-pressed', String(liked));
+    button.classList.toggle('is-liked', liked);
+    button.querySelector('.like-label').textContent = liked ? 'Liked' : 'Like';
+    button.querySelector('.like-count').textContent = liked ? '1' : '0';
+  }
+
+  function renderComments(item, listEl, countEl) {
+    const comments = commentList(item);
+    listEl.replaceChildren();
+    comments.forEach(comment => {
+      const entry = document.createElement('p');
+      entry.className = 'local-comment';
+      const author = document.createElement('strong');
+      author.textContent = comment.author || 'You';
+      const text = document.createElement('span');
+      text.textContent = comment.text;
+      entry.append(author, text);
+      listEl.appendChild(entry);
+    });
+    countEl.textContent = String(comments.length);
+  }
+
+  function renderTile(item, index, fresh = false) {
     const fig = document.createElement('figure');
     fig.className = 'tile';
-    fig.style.setProperty('--ar', item.ar);
-    fig.style.transitionDelay = (i * 45) + 'ms';
-    fig.setAttribute('role', 'button');
-    fig.setAttribute('tabindex', '0');
-    fig.setAttribute('aria-label', `${item.title}, ${item.category}`);
+    fig.style.setProperty('--ar', item.ar || 0.8);
+    fig.style.transitionDelay = fresh ? '0ms' : (index * 45) + 'ms';
+    fig.dataset.itemId = itemKey(item);
 
+    const media = document.createElement('div');
+    media.className = 'tile-media';
+    media.setAttribute('role', 'button');
+    media.setAttribute('tabindex', '0');
+    media.setAttribute('aria-label', `Open ${item.title}`);
     const base = new Image();
     base.className = 'base';
     base.alt = item.title;
     base.loading = 'lazy';
     base.decoding = 'async';
     base.src = thumb(item);
-
     const chroma = new Image();
     chroma.className = 'chroma';
     chroma.alt = '';
@@ -548,32 +649,230 @@
     chroma.loading = 'lazy';
     chroma.decoding = 'async';
     chroma.src = thumb(item);
-
-    fig.append(base, chroma);
-    fig.addEventListener('click', () => openLightbox(i));
-    fig.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(i); }
+    media.append(base, chroma);
+    media.addEventListener('click', () => openLightbox(index));
+    media.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(index); }
     });
 
+    const social = document.createElement('figcaption');
+    social.className = 'tile-social';
+    const actions = document.createElement('div');
+    actions.className = 'social-actions';
+    const like = document.createElement('button');
+    like.type = 'button';
+    like.className = 'social-button like-button';
+    like.setAttribute('aria-pressed', String(Boolean(localState.likes[itemKey(item)])));
+    like.classList.toggle('is-liked', Boolean(localState.likes[itemKey(item)]));
+    like.innerHTML = '<span aria-hidden="true">♡</span> <span class="like-label">Like</span> <span class="like-count">0</span>';
+    if (localState.likes[itemKey(item)]) {
+      like.querySelector('[aria-hidden="true"]').textContent = '♥';
+      like.querySelector('.like-label').textContent = 'Liked';
+      like.querySelector('.like-count').textContent = '1';
+    }
+    like.addEventListener('click', () => {
+      setLiked(item, like);
+      like.querySelector('[aria-hidden="true"]').textContent = localState.likes[itemKey(item)] ? '♥' : '♡';
+    });
+    const share = document.createElement('button');
+    share.type = 'button';
+    share.className = 'social-button';
+    share.textContent = 'Share';
+    share.addEventListener('click', async () => {
+      const imageUrl = item.seed ? new URL(item.seed, location.href).href : location.href;
+      const shareData = { title: item.title, text: `Explore “${item.title}” in the Lumen gallery.`, url: imageUrl };
+      try {
+        if (navigator.share) await navigator.share(shareData);
+        else if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareData.url);
+          showToast('Image link copied.');
+        } else {
+          showToast('Sharing is not available in this browser.');
+        }
+      } catch (error) {
+        if (error && error.name !== 'AbortError') showToast('Could not share this image.');
+      }
+    });
+    const commentButton = document.createElement('button');
+    commentButton.type = 'button';
+    commentButton.className = 'social-button comment-toggle';
+    commentButton.innerHTML = 'Comment <span class="comment-count">0</span>';
+    actions.append(like, share, commentButton);
+
+    const panel = document.createElement('div');
+    panel.className = 'comments-panel';
+    panel.hidden = true;
+    const comments = document.createElement('div');
+    comments.className = 'comment-list';
+    comments.setAttribute('aria-live', 'polite');
+    const form = document.createElement('form');
+    form.className = 'comment-form';
+    const textarea = document.createElement('textarea');
+    textarea.maxLength = 500;
+    textarea.required = true;
+    textarea.rows = 2;
+    textarea.placeholder = 'Add a comment…';
+    textarea.setAttribute('aria-label', `Comment on ${item.title}`);
+    const post = document.createElement('button');
+    post.type = 'submit';
+    post.className = 'social-button post-comment';
+    post.textContent = 'Post';
+    form.append(textarea, post);
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const text = textarea.value.trim();
+      if (!text) return;
+      const key = itemKey(item);
+      const existing = commentList(item);
+      existing.push({ author: (localState.profile && localState.profile.name) || 'You', text, createdAt: new Date().toISOString() });
+      localState.comments[key] = existing;
+      writeLocalJSON(LOCAL_KEYS.comments, localState.comments);
+      textarea.value = '';
+      renderComments(item, comments, commentButton.querySelector('.comment-count'));
+      showToast('Comment saved on this device.');
+    });
+    commentButton.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) textarea.focus({ preventScroll: true });
+    });
+    panel.append(comments, form);
+    renderComments(item, comments, commentButton.querySelector('.comment-count'));
+    social.append(actions, panel);
+    fig.append(media, social);
     wall.appendChild(fig);
     tiles.push(fig);
+    if (fresh) requestAnimationFrame(() => fig.classList.add('in'));
+    return fig;
+  }
+
+  async function initializeGallery() {
+    let premium = false;
+    try {
+      const response = await fetch('/api/entitlement', { credentials: 'same-origin', cache: 'no-store' });
+      if (response.ok) premium = (await response.json()).premium === true;
+    } catch (_) { /* Static previews fail closed and omit private images. */ }
+    galleryItems.push(...ITEMS.filter(item => !item.premium || premium));
+    galleryItems.forEach((item, i) => renderTile(item, i));
+  }
+  const galleryReady = initializeGallery();
+  updateProfileButton();
+
+  /* Local profile: display name only, never a real password or remote account. */
+  profileOpen.addEventListener('click', () => {
+    profileModal.hidden = false;
+    profileName.focus({ preventScroll: true });
+  });
+  profileModal.addEventListener('click', event => {
+    if (event.target.matches('[data-profile-close]')) profileModal.hidden = true;
+  });
+  profileForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = profileName.value.trim().slice(0, 32);
+    if (!name) return;
+    localState.profile = { name };
+    writeLocalJSON(LOCAL_KEYS.profile, localState.profile);
+    updateProfileButton();
+    profileModal.hidden = true;
+    showToast(`Welcome, ${name}. Your profile is local to this browser.`);
+  });
+  profileClear.addEventListener('click', () => {
+    localState.profile = null;
+    try { localStorage.removeItem(LOCAL_KEYS.profile); } catch (_) {}
+    updateProfileButton();
+    profileModal.hidden = true;
+    showToast('Signed out of the local profile.');
+  });
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !profileModal.hidden) profileModal.hidden = true;
   });
 
-  /* stagger the entrance, then drop the delays so hover stays snappy */
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => tiles.forEach(t => t.classList.add('in')));
+  /* Uploaded image files and blobs live only in this browser's IndexedDB. */
+  const UPLOAD_DB = 'museai-local-gallery';
+  function openUploadDB() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+      const request = indexedDB.open(UPLOAD_DB, 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains('images')) request.result.createObjectStore('images', { keyPath: 'id' });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Could not open local image storage'));
+    });
+  }
+  function saveUpload(record) {
+    return openUploadDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction('images', 'readwrite');
+      tx.objectStore('images').put(record);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not save upload')); };
+    }));
+  }
+  function getUploads() {
+    return openUploadDB().then(db => new Promise((resolve, reject) => {
+      const request = db.transaction('images', 'readonly').objectStore('images').getAll();
+      request.onsuccess = () => { const records = request.result || []; db.close(); resolve(records); };
+      request.onerror = () => { db.close(); reject(request.error || new Error('Could not read uploads')); };
+    }));
+  }
+  async function imageAspect(file) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const ar = bitmap.width / bitmap.height;
+      bitmap.close();
+      return Number.isFinite(ar) && ar > 0 ? ar : 0.8;
+    } catch (_) { return 0.8; }
+  }
+  async function addUploadedItem(record, fresh = false) {
+    await galleryReady;
+    const item = { id: record.id, seed: '', imageUrl: URL.createObjectURL(record.blob), title: record.title, category: 'Your uploads', ar: record.ar || 0.8 };
+    const index = galleryItems.push(item) - 1;
+    renderTile(item, index, fresh);
+  }
+  async function restoreUploads() {
+    try {
+      const records = await getUploads();
+      records.sort((a, b) => a.createdAt - b.createdAt);
+      for (const record of records) await addUploadedItem(record, true);
+    } catch (_) { /* Local upload storage may be unavailable for file:// pages. */ }
+  }
+  uploadInput.addEventListener('change', async () => {
+    const files = Array.from(uploadInput.files || []);
+    uploadInput.value = '';
+    if (!files.length) return;
+    let added = 0;
+    let sessionOnly = 0;
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 20 * 1024 * 1024) { showToast(`${file.name} is over the 20 MB local upload limit.`); continue; }
+      const id = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const record = { id, title: file.name.replace(/\.[^.]+$/, '') || 'Untitled upload', ar: await imageAspect(file), createdAt: Date.now(), blob: file };
+      let persisted = true;
+      try { await saveUpload(record); } catch (_) { persisted = false; }
+      await addUploadedItem(record, true);
+      added++;
+      if (!persisted) sessionOnly++;
+    }
+    if (added) showToast(sessionOnly ? `${added} image${added === 1 ? '' : 's'} added for this session only; persistent storage is unavailable.` : `${added} image${added === 1 ? '' : 's'} added to this browser's gallery.`);
   });
-  window.setTimeout(() => tiles.forEach(t => { t.style.transitionDelay = ''; }), 1900);
+  restoreUploads();
+
+  /* stagger the entrance only after entitlement-aware gallery rendering */
+  galleryReady.then(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => tiles.forEach(t => t.classList.add('in')));
+    });
+    window.setTimeout(() => tiles.forEach(t => { t.style.transitionDelay = ''; }), 1900);
+  });
 
   /* ------------------------------------------------------------------
      Spotlight
   ------------------------------------------------------------------ */
   function paintSpotlight(cx, cy) {
     for (let i = 0; i < tiles.length; i++) {
-      const r = tiles[i].getBoundingClientRect();
-      // skip tiles far from the viewport for a little extra speed
-      tiles[i].style.setProperty('--mx', (cx - r.left) + 'px');
-      tiles[i].style.setProperty('--my', (cy - r.top) + 'px');
+      const media = tiles[i].querySelector('.tile-media') || tiles[i];
+      const r = media.getBoundingClientRect();
+      media.style.setProperty('--mx', (cx - r.left) + 'px');
+      media.style.setProperty('--my', (cy - r.top) + 'px');
     }
     glow.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
   }
@@ -659,7 +958,7 @@
   ------------------------------------------------------------------ */
   function openLightbox(i) {
     lbIndex = i;
-    const it = ITEMS[i];
+    const it = galleryItems[i];
 
     lbImg.src = full(it);
     lbImg.alt = it.title;
@@ -687,7 +986,7 @@
 
   function stepLightbox(dir) {
     if (lbIndex === -1) return;
-    openLightbox((lbIndex + dir + ITEMS.length) % ITEMS.length);
+    openLightbox((lbIndex + dir + galleryItems.length) % galleryItems.length);
   }
 
   lbClose.addEventListener('click', closeLightbox);
@@ -721,10 +1020,10 @@
     <button class="museai-close" type="button" aria-label="Close" data-museai-close>×</button>
     <p class="museai-eyebrow">KEEP THE IDEAS MOVING</p>
     <h2 id="museai-support-title">Support the MuseAI archive</h2>
-    <p class="museai-copy">Payment choices are hidden until you complete the age check. Your date of birth is checked in this browser and is not saved or sent by this page.</p>
+    <p class="museai-copy">Optional support links are hidden until you complete the age check. These contributions do not unlock Premium; use the Premium tab for verified membership checkout.</p>
     <div class="museai-age-intro" id="museai-age-intro">
-      <p>Confirm that you are at least 18 to view payment options.</p>
-      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view options <span aria-hidden="true">↗</span></button>
+      <p>Confirm that you are at least 18 to view optional support links.</p>
+      <button class="museai-cta" type="button" id="museai-age-start">Verify age to view support links <span aria-hidden="true">↗</span></button>
       <p class="museai-fineprint">This is a client-side age check, not identity verification. It is not a substitute for legal or payment-provider requirements.</p>
     </div>
     <div class="museai-age-form-wrap" id="museai-age-form-wrap" hidden>
@@ -736,14 +1035,14 @@
       </form>
     </div>
     <div class="museai-payment-options" id="museai-payment-options" hidden>
-      <p class="museai-unlocked">Age check complete · payment providers load below</p>
-      <h3>Choose a way to support</h3>
+      <p class="museai-unlocked">Age check complete · optional support links below</p>
+      <h3>Choose an optional support link</h3>
       <div class="museai-paygrid">
-        <article class="museai-paycard"><h4>PayPal subscription</h4><div id="paypal-button-container-P-4FD24238VX4902214NK2XP2Y"></div></article>
-        <article class="museai-paycard"><h4>Card via Stripe</h4><div id="stripe-button-container"></div></article>
+        <a class="museai-support-link" href="https://github.com/sponsors/Git-FED" target="_blank" rel="noopener noreferrer">GitHub Sponsors</a>
+        <a class="museai-support-link" href="https://nowpayments.io/payment/?iid=5997958570&amp;source=button" target="_blank" rel="noopener noreferrer">NOWPayments</a>
       </div>
       <a class="museai-coffee-link" href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20book&emoji=%F0%9F%93%96&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a book on Buy Me a Coffee"></a>
-      <p class="museai-fineprint">Payment terms and amounts are shown by the payment provider before checkout. Support is optional.</p>
+      <p class="museai-fineprint">Contributions through these external support links do not unlock Premium.</p>
     </div>
   </section>
 </div>

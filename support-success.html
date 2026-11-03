@@ -29,8 +29,8 @@
     <section class="support-success-card reveal-in" aria-labelledby="success-title">
       <p class="museai-eyebrow">SUPPORT / RETURN</p>
       <h1 id="success-title">Thanks for keeping<br><span>the ideas moving.</span></h1>
-      <p id="provider-status" class="museai-copy" aria-live="polite">If you came from checkout, the payment provider has returned you to this page. Please check your provider's receipt or account for the final payment status.</p>
-      <div class="hero-actions"><a class="museai-cta magnetic" href="index.html">Return to Lumen Home <span aria-hidden="true">↗</span></a><a class="museai-text-link" href="museai.html">Explore MuseAI →</a></div>
+      <p id="provider-status" class="museai-copy" aria-live="polite">Checking Premium membership with the server. A provider redirect alone does not unlock the gallery.</p>
+      <div class="hero-actions"><a id="member-link" class="museai-cta magnetic" href="corridor.html" hidden>Open Premium gallery <span aria-hidden="true">↗</span></a><a class="museai-text-link" href="premium-gate.html">Return to Premium gate →</a><a class="museai-text-link" href="index.html">Lumen Home →</a></div>
     </section>
   </main>
   <footer class="promo-footer">
@@ -39,13 +39,24 @@
     <a href="https://www.buymeacoffee.com/fedpromptly"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a book&emoji=📖&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
   </footer>
   <script>
-    (() => {
-      const messages = {
-        paypal: 'PayPal returned you to MuseAI. Please check your PayPal receipt or account for the final subscription status.',
-        stripe: 'Stripe returned you to MuseAI. Please check your Stripe receipt or account for the final payment status.'
-      };
+    (async () => {
+      const status = document.getElementById('provider-status');
+      const memberLink = document.getElementById('member-link');
       const provider = new URLSearchParams(window.location.search).get('provider');
-      if (messages[provider]) document.getElementById('provider-status').textContent = messages[provider];
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store' });
+        const state = response.ok ? await response.json() : null;
+        if (state && state.premium === true) {
+          status.textContent = 'Your active subscription was verified by the server.';
+          memberLink.hidden = false;
+          return;
+        }
+        status.textContent = provider === 'stripe'
+          ? 'Stripe has returned you to the site, but the server has not confirmed an active Premium subscription yet. Stay signed in and try the Premium gate again after Stripe sends its verified event.'
+          : 'No active Premium subscription has been confirmed for this account. A provider redirect or receipt does not unlock the gallery.';
+      } catch (_) {
+        status.textContent = 'Membership could not be checked. Premium remains locked until the server confirms an active subscription.';
+      }
     })();
   </script>
   <script src="assets/js/app.js" defer></script>
