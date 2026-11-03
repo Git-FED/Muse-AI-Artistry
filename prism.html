@@ -452,14 +452,11 @@
   /* ------------------------------------------------------------------
      Collection
   ------------------------------------------------------------------ */
-  const ITEMS = [
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 07 Traffic Cop", category: "Concept illustration", note: "Simple 07 Traffic Cop — Concept illustration." },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 10 Elevator", category: "Concept illustration", note: "Simple 10 Elevator — Concept illustration." },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 05 Idea Checkout", category: "Concept illustration", note: "Simple 05 Idea Checkout — Concept illustration." },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 02 Customer Service", category: "Concept illustration", note: "Simple 02 Customer Service — Concept illustration." },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 01 Two Buttons", category: "Concept illustration", note: "Simple 01 Two Buttons — Concept illustration." },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Simple 08 Big Small", category: "Concept illustration", note: "Simple 08 Big Small — Concept illustration." }
-  ];
+  const ITEMS = [];
+  if (!ITEMS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
   const thumb = s => s;
   const full  = s => s;
 

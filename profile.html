@@ -445,23 +445,11 @@
      Collection — supplied artwork, category, and tile size
      size: '' | 'w' | 'h' | 'wh'
   ------------------------------------------------------------------ */
-  const ITEMS = [
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android 10 New 04", category: "MuseAI mobile campaign", size: "wh" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android Muse Clone V2", category: "MuseAI mobile campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android Two Devices V1", category: "MuseAI mobile campaign", size: "h" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android Dual Apps V1", category: "MuseAI mobile campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android Dual Apps V2", category: "MuseAI mobile campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store Landscape 04", category: "MuseAI App Store campaign", size: "w" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store 03", category: "MuseAI App Store campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store Landscape 05", category: "MuseAI App Store campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store 01", category: "MuseAI App Store campaign", size: "h" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store 04", category: "MuseAI App Store campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store 08", category: "MuseAI App Store campaign", size: "wh" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse App Store 07", category: "MuseAI App Store campaign", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 18 Tiny Download", category: "MuseAI campaign artwork", size: "" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 13 Big Brain", category: "MuseAI Windows app visuals", size: "w" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 07 App Sushi", category: "MuseAI campaign artwork", size: "" }
-  ];
+  const ITEMS = [];
+  if (!ITEMS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
 
   const N = ITEMS.length;
   const thumb = s => s;

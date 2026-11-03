@@ -503,9 +503,13 @@
   function setSafeImageSource(image, source) {
     image.dataset.placeholderFallback = 'false';
     image.onerror = () => {
-      if (image.dataset.placeholderFallback === 'true') return;
       image.dataset.placeholderFallback = 'true';
-      image.src = PLACEHOLDER_IMAGE;
+      const card = image.closest('.card');
+      if (card) card.remove();
+      if (!tunnel.querySelector('.card img')) {
+        document.documentElement.dataset.galleryEmpty = 'true';
+        document.dispatchEvent(new Event('museai:gallery-empty'));
+      }
     };
     image.src = source;
   }

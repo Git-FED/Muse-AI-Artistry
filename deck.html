@@ -382,16 +382,11 @@
   /* ------------------------------------------------------------------
      Collection
   ------------------------------------------------------------------ */
-  const ITEMS = [
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 15 Meta Meets Microsoft", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 11 Landscape Windows Desktop", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 10 Installing", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 05 Update Available", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 04 Category Grid", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 02 Featured App", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse 13 Comical Windows Crash", category: "MuseAI Windows app visuals" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Windows 11 06", category: "MuseAI Windows app visuals" }
-  ];
+  const ITEMS = [];
+  if (!ITEMS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
 
   const N = ITEMS.length;
 

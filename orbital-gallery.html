@@ -269,18 +269,11 @@
   /* ------------------------------------------------------------------
      Content
   ------------------------------------------------------------------ */
-  const ITEMS = [
-    { title: "Meta Muse 07 Avatar Museum", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 01 Portal Plaza", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 02 Mirror Room", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 03 Memory Ocean", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 04 Rooftop Social", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 05 Idea Garden", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 09 Signal Studio", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Meta Muse 10 Paper Skyway", category: "Meta Muse concept art", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Duel AI 04 Network Pilot", category: "Duel AI campaign", src: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Duel AI 02 Dual Launch", category: "Duel AI campaign", src: "assets/gallery-images/gallery-placeholder.webp" }
-  ];
+  const ITEMS = [];
+  if (!ITEMS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
 
   const stage   = document.getElementById("stage");
   const ring    = document.getElementById("ring");

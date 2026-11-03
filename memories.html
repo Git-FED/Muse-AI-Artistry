@@ -329,20 +329,11 @@
   /* ---------------------------------------------------------------
      Content
   --------------------------------------------------------------- */
-  const PHOTOS = [
-    { title: "10 Blueprint", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "08 Ransom Note", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "07 Newspaper", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "06 Meme Caption", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "02 Movie Poster", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 14 Giant Keyhole", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 08 Infomercial Box", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 05 Diagonal Split", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 10 404 Ghost", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 01 Locked Out", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "10 Blueprint", category: "Editorial artwork", seed: "assets/gallery-images/gallery-placeholder.webp" },
-    { title: "Comic 14 Giant Keyhole", category: "Comic illustration", seed: "assets/gallery-images/gallery-placeholder.webp" }
-  ];
+  const PHOTOS = [];
+  if (!PHOTOS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
 
   const stage  = document.getElementById("stage");
   const btnShuf = document.getElementById("btn-shuffle");

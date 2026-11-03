@@ -136,8 +136,24 @@ for filename in PROTECTED:
 index = (ROOT / 'index.html').read_text(encoding='utf-8')
 if index.count('"premium": true') != len(PROTECTED):
     problems.append('index.html must mark all ten private Premium images for entitlement-aware loading')
+placeholder_tiles = re.findall(r'\{\s*"seed"\s*:\s*"assets/gallery-images/gallery-placeholder\.webp"', index)
+if len(placeholder_tiles) != 1:
+    problems.append(f'Features must define exactly one default placeholder tile; found {len(placeholder_tiles)}')
 if 'fetch(\'/api/entitlement\'' not in index:
     problems.append('index.html does not check server entitlement before showing private Premium studies')
+
+empty_gallery_pages = ('deck.html', 'exclusives.html', 'memories.html', 'orbital-gallery.html', 'prism.html', 'projects.html', 'profile.html')
+for page_name in empty_gallery_pages:
+    page_html = (ROOT / page_name).read_text(encoding='utf-8')
+    if "dataset.galleryEmpty = 'true'" not in page_html:
+        problems.append(f'{page_name}: placeholder-only gallery does not enter the shared empty state')
+    if 'gallery-placeholder.webp' not in page_html:
+        problems.append(f'{page_name}: social preview should continue to use the existing public placeholder asset')
+gallery_tools = (ROOT / 'assets/js/gallery-tools.js').read_text(encoding='utf-8')
+if 'gallery-empty-state' not in gallery_tools or 'uploadTrigger.click()' not in gallery_tools:
+    problems.append('Shared empty state must offer the existing local Upload action')
+if '/premium-assets/fed-edu-simple-login-1.webp' not in (ROOT / 'corridor.html').read_text(encoding='utf-8'):
+    problems.append('Premium gallery must retain its private Cloudflare media route')
 
 app_js = (ROOT / 'assets/js/app.js').read_text(encoding='utf-8')
 if 'paypal.com/sdk' in app_js or 'js.stripe.com' in app_js:
@@ -212,4 +228,4 @@ if problems:
     for problem in problems:
         print('FAIL:', problem, file=sys.stderr)
     sys.exit(1)
-print(f'PASS: validated {len(pages)} HTML pages, local links/assets, one gallery placeholder, no bundled gallery photos, fail-closed membership routes, and payment verification.')
+print(f'PASS: validated {len(pages)} HTML pages, exactly one default Features placeholder tile, {len(empty_gallery_pages)} upload empty states, local links/assets, no bundled gallery photos, fail-closed membership routes, and payment verification.')

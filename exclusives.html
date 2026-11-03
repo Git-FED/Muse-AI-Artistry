@@ -462,20 +462,11 @@
 (() => {
   "use strict";
 
-  const ITEMS = [
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Duel AI 01 Command Center", category: "Duel AI campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Duel Muse 05 App Detail Pose", category: "Duel AI campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Duel Muse 07 Spotlight Pose", category: "Duel AI campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Duel Muse 10 Download Ready", category: "Duel AI campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android 10 New 06", category: "MuseAI mobile campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse Sports Theme 01", category: "Mobile sports campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse AI Betting New 06", category: "Mobile sports campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse AI Betting New 05", category: "Mobile sports campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse Agent AI Sports Betting", category: "Mobile sports campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "Muse AI Betting New 03", category: "Mobile sports campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android 10 New 01", category: "MuseAI mobile campaign" },
-    { seed: "assets/gallery-images/gallery-placeholder.webp", title: "MuseAI Android 10 New 02", category: "MuseAI mobile campaign" }
-  ];
+  const ITEMS = [];
+  if (!ITEMS.length) {
+    document.documentElement.dataset.galleryEmpty = 'true';
+    return;
+  }
 
   const N = ITEMS.length;
   const thumb = s => s;
