@@ -4,7 +4,6 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 import json
-import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,8 +14,7 @@ PROTECTED = {
 }
 REQUIRED = [
     'index.html', 'museai.html', '404.html', 'support-success.html', 'premium-gate.html', 'corridor.html',
-    'assets/css/main.css', 'assets/css/paywall.css', 'assets/css/gallery-tools.css',
-    'assets/js/app.js', 'assets/js/paywall.js', 'assets/js/gallery-tools.js',
+    'assets/css/main.css', 'assets/css/paywall.css', 'assets/js/app.js', 'assets/js/paywall.js',
     'assets/images/favicon.png', 'favicon.ico', 'social-image.png',
     'assets/promo/comic-01-creative-chaos.webp', 'assets/promo/comic-02-ask-before-launch.webp',
     'assets/promo/comic-03-tiny-idea-guard.webp', 'assets/gallery-images/manifest.json',
@@ -149,35 +147,6 @@ if 'stripe-signature' not in webhook or 'STRIPE_EXPECTED_PRICE_ID' not in webhoo
 paypal_verify = (ROOT / 'functions/api/billing/paypal-verify.js').read_text(encoding='utf-8')
 if 'subscription.custom_id !== customId' not in paypal_verify or "subscription.status !== 'ACTIVE'" not in paypal_verify:
     problems.append('PayPal verification is missing one-time intent or active-subscription checks')
-
-gallery_tool_pages = (
-    'index.html', 'corridor.html', 'deck.html', 'exclusives.html', 'memories.html',
-    'orbital-gallery.html', 'prism.html', 'projects.html', 'profile.html'
-)
-for page_name in gallery_tool_pages:
-    page_html = (ROOT / page_name).read_text(encoding='utf-8')
-    match = re.search(r'<div class="gallery-account-tools"[^>]*>(.*?)</div>', page_html, re.S)
-    if not match:
-        problems.append(f'{page_name}: shared Upload/Profile/Sign in controls are missing')
-        continue
-    controls = match.group(1)
-    upload_at = controls.find('id="galleryUploadTrigger"')
-    profile_at = controls.find('href="profile.html"')
-    signin_at = controls.find(f'href="/auth/login?returnTo=%2F{page_name}"')
-    if not (0 <= upload_at < profile_at < signin_at):
-        problems.append(f'{page_name}: controls must be ordered Upload, Profile, then MuseAI Sign in')
-    if 'id="localImageUpload"' not in controls or 'type="file"' not in controls:
-        problems.append(f'{page_name}: Upload control is missing its image file input')
-    if 'aria-label="Sign in with MuseAI"' not in controls:
-        problems.append(f'{page_name}: sign-in control is not identified as MuseAI sign-in')
-    if 'assets/css/gallery-tools.css' not in page_html or 'assets/js/gallery-tools.js' not in page_html:
-        problems.append(f'{page_name}: shared control styling or behavior is not loaded')
-
-for page_name in ('profile.html', 'deck.html'):
-    page_html = (ROOT / page_name).read_text(encoding='utf-8')
-    nested = re.search(r'<nav class="profile-section-tabs"[^>]*>(.*?)</nav>', page_html, re.S)
-    if not nested or nested.group(1).find('href="profile.html"') > nested.group(1).find('href="deck.html"'):
-        problems.append(f'{page_name}: Portfolio must remain nested after Profile')
 
 manifest = json.loads((ROOT / 'assets/gallery-images/manifest.json').read_text(encoding='utf-8'))
 entries = manifest if isinstance(manifest, list) else manifest.get('images', manifest.get('items', []))

@@ -356,7 +356,6 @@
   /* Keep the complete page navigation accessible on narrow screens. */
   .gallery-tabs { flex-wrap: wrap; }
 </style>
-  <link rel="stylesheet" href="assets/css/gallery-tools.css">
 </head>
 <body>
 
@@ -378,12 +377,6 @@
       <a href="profile.html" aria-current="page">Profile</a>
       <a href="deck.html">Portfolio</a>
     </nav>
-    <div class="gallery-account-tools" id="galleryAccountTools" role="group" aria-label="Gallery tools">
-      <button class="gallery-tool-button" id="galleryUploadTrigger" type="button">＋ Upload</button>
-      <input id="localImageUpload" class="gallery-tool-input" type="file" accept="image/*" multiple aria-label="Choose images to upload">
-      <a class="gallery-tool-button" href="profile.html">Profile</a>
-      <a class="gallery-tool-button gallery-tool-button--primary" href="/auth/login?returnTo=%2Fprofile.html" aria-label="Sign in with MuseAI">Sign in</a>
-    </div>
 <p class="museai-header-tag">MUSEAI · IDEAS, INTERFACES, AND IMAGINED WORLDS</p>
 
     <p class="hint" id="hint">Move to attract &nbsp;·&nbsp; Click to open</p>
@@ -401,28 +394,9 @@
       <p class="eyebrow">Profile</p>
       <h1 id="profile-title">Recommended images</h1>
       <p>A selection of images to explore. These are recommendations, not your posts.</p>
-      <button class="gallery-tool-button gallery-profile-edit" id="localProfileOpen" type="button">Edit local profile</button>
     </section>
     <div class="grid" id="grid" aria-label="Recommended images"></div>
   </main>
-  <div class="gallery-profile-modal" id="galleryProfileModal" hidden>
-    <section class="gallery-profile-card" role="dialog" aria-modal="true" aria-labelledby="galleryProfileTitle">
-      <button class="gallery-profile-close" type="button" data-gallery-profile-close aria-label="Close local profile">×</button>
-      <p>THIS DEVICE ONLY</p>
-      <h2 id="galleryProfileTitle">Local profile</h2>
-      <p>Choose a display name for your local comments and gallery interactions. This does not sign you into an online account.</p>
-      <form id="galleryProfileForm">
-        <label for="galleryProfileName">Display name</label>
-        <input id="galleryProfileName" name="displayName" type="text" maxlength="32" autocomplete="nickname" placeholder="e.g. Alex" required>
-        <div class="gallery-profile-actions">
-          <button class="gallery-tool-button gallery-tool-button--primary" type="submit">Save on this device</button>
-          <button class="gallery-tool-button" id="galleryProfileClear" type="button">Clear local profile</button>
-        </div>
-        <p class="gallery-tool-status" id="galleryToolStatus" role="status" aria-live="polite"></p>
-      </form>
-    </section>
-  </div>
-
 
   <div class="lb" id="lb" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Photo viewer">
     <button class="lb-btn lb-x" id="lbX" type="button" aria-label="Close viewer">✕</button>
@@ -800,7 +774,6 @@
     </div>
   </section>
 </div>
-  <script src="assets/js/gallery-tools.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
