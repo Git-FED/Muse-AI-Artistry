@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "title": "Muse 01 App Store Shelf (gallery placeholder)",
+    "category": "Placeholder",
+    "filename": "gallery-placeholder.webp",
+    "src": "assets/gallery-images/gallery-placeholder.webp",
+    "width": 1664,
+    "height": 2080,
+    "has_alpha": false,
+    "placeholder": true
+  }
+]
