@@ -8,15 +8,19 @@
     const form = document.getElementById('museai-age-form');
     const dateInput = document.getElementById('museai-dob');
     const error = document.getElementById('museai-age-error');
-    const payment = document.getElementById('museai-payment-options');
+    const supportLinks = document.getElementById('museai-payment-options');
     const start = document.getElementById('museai-age-start');
-    let loaded = false;
     const isConfirmed = () => { try { return sessionStorage.getItem('museai_age_confirmed') === 'yes'; } catch (_) { return false; } };
+    const revealSupportLinks = () => {
+      if (ageIntro) ageIntro.hidden = true;
+      if (ageWrap) ageWrap.hidden = true;
+      if (supportLinks) supportLinks.hidden = false;
+    };
     const openPanel = () => {
       support.hidden = false;
       support.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
-      if (isConfirmed()) unlock();
+      if (isConfirmed()) revealSupportLinks();
       support.querySelector('[data-museai-close]')?.focus({preventScroll:true});
     };
     const closePanel = () => {
@@ -24,49 +28,6 @@
       support.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
       openButton.focus({preventScroll:true});
-    };
-    const unlock = () => {
-      if (ageIntro) ageIntro.hidden = true;
-      if (ageWrap) ageWrap.hidden = true;
-      if (payment) payment.hidden = false;
-      loadPaymentWidgets();
-    };
-    const scriptOnce = (src, id, callback) => {
-      if (document.getElementById(id)) { if (callback) callback(); return; }
-      const script = document.createElement('script');
-      script.id = id; script.src = src; script.async = true;
-      if (callback) script.onload = callback;
-      document.head.appendChild(script);
-    };
-    const loadPaymentWidgets = () => {
-      if (loaded) return;
-      loaded = true;
-      const paypalTarget = document.getElementById('paypal-button-container-P-4FD24238VX4902214NK2XP2Y');
-      if (paypalTarget) {
-        scriptOnce('https://www.paypal.com/sdk/js?client-id=BAA_ndqaWMyQwTnDZ0LXwLQ22jdJo9uxkeXYqmBbF-hD41HMiZ83mvOcx1Kti0b6ZfXfje7Q1ievNaS8Ok&vault=true&intent=subscription', 'museai-paypal-sdk', () => {
-          if (!window.paypal || !paypalTarget.isConnected) return;
-          window.paypal.Buttons({
-            style: {shape:'rect',color:'gold',layout:'vertical',label:'subscribe'},
-            createSubscription: (data, actions) => actions.subscription.create({plan_id:'P-4FD24238VX4902214NK2XP2Y',quantity:1}),
-            onApprove: () => { window.location.assign('support-success.html?provider=paypal'); },
-            onError: () => { const note=document.createElement('p'); note.className='museai-age-error'; note.textContent='PayPal could not load. Please try again later.'; paypalTarget.appendChild(note); }
-          }).render('#paypal-button-container-P-4FD24238VX4902214NK2XP2Y');
-        });
-      }
-      if (document.getElementById('stripe-button-container')) {
-        const stripeScript = document.createElement('script');
-        stripeScript.async = true;
-        stripeScript.src = 'https://js.stripe.com/v3/buy-button.js';
-        stripeScript.onload = () => {
-          const box = document.getElementById('stripe-button-container');
-          if (!box) return;
-          const button = document.createElement('stripe-buy-button');
-          button.setAttribute('buy-button-id','buy_btn_1UJKaaJaRf233kfWKZ81fcIe');
-          button.setAttribute('publishable-key','pk_live_51UIdAGJaRf233kfWlFacR31IYVGdjCVAttNFzIgQGXQzrUdc894iJcBqamRZNwF11z2AN5kvjyzitor462f2egVI00UmKj0sd8');
-          box.appendChild(button);
-        };
-        document.head.appendChild(stripeScript);
-      }
     };
     openButton.addEventListener('click', openPanel);
     document.querySelectorAll('[data-open-support]').forEach(button => button.addEventListener('click', openPanel));
@@ -81,11 +42,11 @@
       let age = now.getFullYear() - birth.getFullYear();
       const beforeBirthday = now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
       if (beforeBirthday) age--;
-      if (age < 18) { error.textContent = 'You must be at least 18 to view these payment options.'; return; }
+      if (age < 18) { error.textContent = 'You must be at least 18 to view these support links.'; return; }
       error.textContent = '';
-      try { sessionStorage.setItem('museai_age_confirmed','yes'); } catch (_) { /* check still works for this page view */ }
+      try { sessionStorage.setItem('museai_age_confirmed','yes'); } catch (_) { /* This check still applies for this page view. */ }
       dateInput.value = '';
-      unlock();
+      revealSupportLinks();
     });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && !support.hidden) closePanel(); });
   }
