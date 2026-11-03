@@ -429,6 +429,43 @@
   .features-gallery-page .lb-fig img { max-height: 52vh; }
 }
 
+.gallery-empty-host { display: none !important; }
+.gallery-empty-state {
+  position: fixed;
+  z-index: 60;
+  top: 58%;
+  left: 50%;
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 36px));
+  padding: clamp(24px, 5vw, 42px);
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(205, 218, 245, .2);
+  border-radius: 22px;
+  background: rgba(12, 16, 25, .9);
+  color: #f2f5fb;
+  text-align: center;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, .38);
+  backdrop-filter: blur(14px);
+}
+.gallery-empty-state h1 {
+  margin: 0;
+  font: 400 clamp(27px, 5vw, 39px)/1.12 Georgia, "Times New Roman", serif;
+}
+.gallery-empty-state p {
+  max-width: 360px;
+  margin: 14px auto 22px;
+  color: rgba(220, 229, 247, .72);
+  font: 13px/1.65 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+body.premium-pending .gallery-empty-state { display: none !important; }
+@media (max-width: 620px) {
+  .gallery-empty-state {
+    top: 56%;
+    width: calc(100vw - 28px);
+    padding: 26px 20px;
+  }
+}
+
 .gallery-upload-preview {
   appearance: none;
   display: block;

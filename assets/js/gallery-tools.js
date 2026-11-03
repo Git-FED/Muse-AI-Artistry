@@ -78,6 +78,60 @@
   if (!uploadInput || !uploadTrigger) return;
   uploadTrigger.addEventListener('click', () => uploadInput.click());
 
+  const EMPTY_GALLERY_PAGES = {
+    'corridor.html': ['#tunnel'],
+    'deck.html': ['#deck'],
+    'exclusives.html': ['#track', '#projInner'],
+    'memories.html': ['#stage'],
+    'orbital-gallery.html': ['#ring'],
+    'prism.html': ['#accordion'],
+    'projects.html': ['#stream'],
+    'profile.html': ['#grid']
+  };
+  function showGalleryEmptyState() {
+    if (document.body.classList.contains('premium-pending')) return;
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const selectors = EMPTY_GALLERY_PAGES[page];
+    if (!selectors) return;
+    selectors.forEach(selector => {
+      const host = document.querySelector(selector);
+      if (!host) return;
+      const preserveIntroduction = page === 'profile.html' || page === 'projects.html';
+      const surface = preserveIntroduction ? host : (host.closest('main') || host.closest('.stage') || host);
+      surface.classList.add('gallery-empty-host');
+    });
+    const extras = {
+      'deck.html': ['.info', '.hint'],
+      'exclusives.html': ['.counter', '.hint'],
+      'memories.html': ['#btn-shuffle', '#btn-tidy'],
+      'orbital-gallery.html': ['.caption'],
+      'prism.html': ['.counter', '.hint'],
+      'projects.html': ['.hint', '.end', '#scrollHint'],
+      'profile.html': ['.hint']
+    }[page] || [];
+    extras.forEach(selector => document.querySelectorAll(selector).forEach(node => { node.hidden = true; }));
+    if (document.getElementById('galleryEmptyState')) return;
+    const state = document.createElement('section');
+    state.id = 'galleryEmptyState';
+    state.className = 'gallery-empty-state';
+    state.setAttribute('role', 'region');
+    state.setAttribute('aria-labelledby', 'galleryEmptyTitle');
+    const title = document.createElement('h1');
+    title.id = 'galleryEmptyTitle';
+    title.textContent = 'No images here yet';
+    const copy = document.createElement('p');
+    copy.textContent = 'This gallery is ready for your images. Upload a photo to get started; uploads stay in this browser.';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'gallery-tool-button gallery-tool-button--primary';
+    button.textContent = '＋ Upload images';
+    button.addEventListener('click', () => uploadTrigger.click());
+    state.append(title, copy, button);
+    document.body.appendChild(state);
+  }
+  document.addEventListener('museai:gallery-empty', showGalleryEmptyState);
+  if (document.documentElement.dataset.galleryEmpty === 'true') showGalleryEmptyState();
+
   // The Features wall already renders uploaded blobs as native gallery tiles.
   // Its existing handler remains the single owner of upload persistence there.
   if (document.getElementById('wall')) return;
