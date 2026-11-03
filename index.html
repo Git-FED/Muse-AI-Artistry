@@ -468,6 +468,47 @@
     downloads: readLocalJSON(LOCAL_KEYS.downloads, {}),
     profile: readLocalJSON(LOCAL_KEYS.profile, null)
   };
+
+  // --- D1/R2 server state (replaces local-only counts/uploads) ---
+  const API_BASE = 'https://muse-ai-artistry.fedos.workers.dev';
+  function viewerId() {
+    let id = localStorage.getItem('museai.viewer.v1');
+    if (!id) { id = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9); localStorage.setItem('museai.viewer.v1', id); }
+    return id;
+  }
+  async function apiCall(path, options = {}) {
+    const res = await fetch(API_BASE + path, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+    if (!res.ok) throw new Error('API ' + res.status);
+    return res.json();
+  }
+  const serverState = {}; // itemKey -> {views, likes, comments, liked}
+  async function syncMetricsInserted(item) {
+    const key = itemKey(item);
+    try {
+      const m = await apiCall('/api/metrics?item_id=' + encodeURIComponent(key) + '&viewer_id=' + encodeURIComponent(viewerId()));
+      serverState[key] = m;
+    } catch (_) { return; /* keep local display if API unreachable */ }
+    const m = serverState[key];
+    const card = tiles.find(tile => tile.dataset.itemId === key);
+    if (card) {
+      const like = card.querySelector('.like-button');
+      if (like) {
+        like.setAttribute('aria-pressed', String(Boolean(m.liked)));
+        like.classList.toggle('is-liked', Boolean(m.liked));
+        like.querySelector('.like-label').textContent = m.liked ? 'Liked' : 'Like';
+        like.querySelector('.like-count').textContent = String(m.likes);
+        like.querySelector('[aria-hidden="true"]').textContent = m.liked ? '♥' : '♡';
+      }
+      card.querySelector('.comment-count').textContent = String(m.comments);
+      card.querySelector('.tile-view-count').textContent = String(m.views);
+      card.querySelector('.tile-views').setAttribute('aria-label', `${m.views} views`);
+    }
+    if (lbIndex !== -1 && itemKey(galleryItems[lbIndex]) === key) {
+      lbLikes.textContent = String(m.likes);
+      lbComments.textContent = String(m.comments);
+      lbViews.textContent = String(m.views);
+    }
+  }
   let toastTimer = 0;
   const pointer = { x: 0, y: 0 };
   let hasPointer = false;
@@ -509,37 +550,19 @@
     return Array.isArray(list) ? list : [];
   }
 
-  function syncMetrics(item) {
+  function syncMetrics(item) { serverSync(item); }
+  async function serverSync(item) { await syncMetricsServer(item); }
+  async function syncMetricsServer(item) {
     const key = itemKey(item);
+    try { const m = await apiCall('/api/metrics?item_id=' + encodeURIComponent(key) + '&viewer_id=' + encodeURIComponent(viewerId())); serverState[key] = m; } catch (_) { return; }
+    const m = serverState[key];
     const card = tiles.find(tile => tile.dataset.itemId === key);
-    const likes = localState.likes[key] ? 1 : 0;
-    const comments = commentList(item).length;
-    const views = metricCount('views', item);
-    const downloads = metricCount('downloads', item);
-    if (card) {
-      const like = card.querySelector('.like-button');
-      if (like) {
-        like.setAttribute('aria-pressed', String(Boolean(likes)));
-        like.classList.toggle('is-liked', Boolean(likes));
-        like.querySelector('.like-label').textContent = likes ? 'Liked' : 'Like';
-        like.querySelector('.like-count').textContent = String(likes);
-        like.querySelector('[aria-hidden="true"]').textContent = likes ? '♥' : '♡';
-      }
-      card.querySelector('.comment-count').textContent = String(comments);
-      card.querySelector('.tile-view-count').textContent = String(views);
-      card.querySelector('.tile-views').setAttribute('aria-label', `${views} local views`);
-      card.querySelector('.download-count').textContent = String(downloads);
-      card.querySelector('.tile-download').title = `${downloads} downloads on this device`;
-    }
-    if (lbIndex !== -1 && itemKey(galleryItems[lbIndex]) === key) {
-      lbLikes.textContent = String(likes);
-      lbComments.textContent = String(comments);
-      lbViews.textContent = String(views);
-      lbDownloads.textContent = String(downloads);
-    }
+    if (card) { const like = card.querySelector('.like-button'); if (like) { like.setAttribute('aria-pressed', String(Boolean(m.liked))); like.classList.toggle('is-liked', Boolean(m.liked)); like.querySelector('.like-label').textContent = m.liked ? 'Liked' : 'Like'; like.querySelector('.like-count').textContent = String(m.likes); like.querySelector('[aria-hidden="true"]').textContent = m.liked ? '♥' : '♡'; } card.querySelector('.comment-count').textContent = String(m.comments); card.querySelector('.tile-view-count').textContent = String(m.views); }
+    if (lbIndex !== -1 && itemKey(galleryItems[lbIndex]) === key) { lbLikes.textContent = String(m.likes); lbComments.textContent = String(m.comments); lbViews.textContent = String(m.views); }
   }
 
   function incrementMetric(type, item) {
+    if (type === 'views') { apiCall('/api/view', { method: 'POST', body: JSON.stringify({ item_id: itemKey(item) }) }).then(() => syncMetrics(item)).catch(() => {}); return; }
     const key = itemKey(item);
     localState[type][key] = metricCount(type, item) + 1;
     writeLocalJSON(LOCAL_KEYS[type], localState[type]);
@@ -568,16 +591,22 @@
   }
 
   function setLiked(item, button) {
-    const key = itemKey(item);
-    const liked = !localState.likes[key];
-    if (liked) localState.likes[key] = true;
-    else delete localState.likes[key];
-    writeLocalJSON(LOCAL_KEYS.likes, localState.likes);
-    syncMetrics(item);
+    apiCall('/api/like', { method: 'POST', body: JSON.stringify({ item_id: itemKey(item), viewer_id: viewerId() }) }).then(() => syncMetrics(item)).catch(() => showToast('Could not save like.'));
   }
 
   function renderComments(item, listEl, countEl) {
-    const comments = commentList(item);
+    apiCall('/api/comments?item_id=' + encodeURIComponent(itemKey(item))).then(data => {
+      const comments = data.comments || [];
+      listEl.replaceChildren();
+      comments.forEach(comment => {
+        const entry = document.createElement('p'); entry.className = 'local-comment';
+        const author = document.createElement('strong'); author.textContent = comment.author || 'You';
+        const text = document.createElement('span'); text.textContent = comment.text;
+        entry.append(author, text); listEl.appendChild(entry);
+      });
+      countEl.textContent = String(comments.length); syncMetrics(item);
+    }).catch(() => {});
+    const comments = [];
     listEl.replaceChildren();
     comments.forEach(comment => {
       const entry = document.createElement('p');
@@ -703,13 +732,7 @@
       event.preventDefault();
       const text = textarea.value.trim();
       if (!text) return;
-      const key = itemKey(item);
-      const existing = commentList(item);
-      existing.push({ author: (localState.profile && localState.profile.name) || 'You', text, createdAt: new Date().toISOString() });
-      localState.comments[key] = existing;
-      writeLocalJSON(LOCAL_KEYS.comments, localState.comments);
-      textarea.value = '';
-      renderComments(item, comments, commentButton.querySelector('.comment-count'));
+      apiCall('/api/comments', { method: 'POST', body: JSON.stringify({ item_id: itemKey(item), author: (localState.profile && localState.profile.name) || 'You', text }) }).then(() => { textarea.value = ''; renderComments(item, comments, commentButton.querySelector('.comment-count')); }).catch(() => showToast('Could not post comment.'));
       showToast('Comment saved on this device.');
     });
     commentButton.addEventListener('click', () => {
@@ -734,6 +757,7 @@
     } catch (_) { /* Static previews fail closed and omit private images. */ }
     galleryItems.push(...ITEMS.filter(item => !item.premium || premium));
     galleryItems.forEach((item, i) => renderTile(item, i));
+    galleryItems.forEach(item => syncMetrics(item));
   }
   const galleryReady = initializeGallery();
 
@@ -781,29 +805,32 @@
   }
   async function restoreUploads() {
     try {
-      const records = await getUploads();
-      records.sort((a, b) => a.createdAt - b.createdAt);
-      for (const record of records) await addUploadedItem(record, true);
-    } catch (_) { /* Local upload storage may be unavailable for file:// pages. */ }
+      const data = await apiCall('/api/items');
+      for (const it of data.items || []) {
+        const item = { id: it.id, seed: '', imageUrl: API_BASE + it.url, mimeType: it.mime, title: it.title, category: it.category || 'Your uploads', ar: 1.0 };
+        const index = galleryItems.push(item) - 1; renderTile(item, index, true); syncMetrics(item);
+      }
+    } catch (_) { /* API unreachable: uploads unavailable this load */ }
   }
   uploadInput.addEventListener('change', async () => {
     const files = Array.from(uploadInput.files || []);
     uploadInput.value = '';
     if (!files.length) return;
     let added = 0;
-    let sessionOnly = 0;
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
-      if (file.size > 20 * 1024 * 1024) { showToast(`${file.name} is over the 20 MB local upload limit.`); continue; }
-      const id = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const record = { id, title: file.name.replace(/\.[^.]+$/, '') || 'Untitled upload', ar: await imageAspect(file), createdAt: Date.now(), blob: file };
-      let persisted = true;
-      try { await saveUpload(record); } catch (_) { persisted = false; }
-      await addUploadedItem(record, true);
-      added++;
-      if (!persisted) sessionOnly++;
+      if (file.size > 20 * 1024 * 1024) { showToast(`${file.name} is over the 20 MB upload limit.`); continue; }
+      try {
+        const form = new FormData(); form.append('file', file); form.append('title', file.name.replace(/\.[^.]+$/, '') || 'Untitled upload');
+        const res = await fetch(API_BASE + '/api/upload', { method: 'POST', body: form });
+        if (!res.ok) throw new Error('Upload ' + res.status);
+        const it = await res.json();
+        const item = { id: it.id, seed: '', imageUrl: API_BASE + it.url, mimeType: file.type, title: it.title, category: 'Your uploads', ar: await imageAspect(file) };
+        const index = galleryItems.push(item) - 1; renderTile(item, index, true); syncMetrics(item);
+        added++;
+      } catch (_) { showToast(`Could not upload ${file.name}.`); }
     }
-    if (added) showToast(sessionOnly ? `${added} image${added === 1 ? '' : 's'} added for this session only; persistent storage is unavailable.` : `${added} image${added === 1 ? '' : 's'} added to this browser's gallery.`);
+    if (added) showToast(`${added} image${added === 1 ? '' : 's'} uploaded to the gallery.`);
   });
   restoreUploads();
 
