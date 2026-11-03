@@ -1,0 +1,280 @@
+/* Shared controls for the MuseAI gallery and profile/portfolio pages. */
+
+/* The Explore page uses a grid-based full-screen canvas; keep its header
+   track constrained so the shared toolbar wraps within the viewport. */
+.orbital-gallery-page { grid-template-columns: minmax(0, 1fr); }
+.orbital-gallery-page > header { box-sizing: border-box; width: 100%; min-width: 0; }
+.bar {
+  flex-wrap: wrap;
+}
+
+.gallery-account-tools {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin: 0;
+  position: relative;
+  z-index: 70;
+}
+
+.gallery-tool-button {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(205, 218, 245, .24);
+  border-radius: 999px;
+  padding: 9px 15px;
+  background: rgba(18, 22, 34, .9);
+  color: #f2f5fb;
+  font: 600 10px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .12em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.gallery-tool-button:hover {
+  background: rgba(53, 63, 89, .95);
+  border-color: rgba(205, 218, 245, .5);
+  transform: translateY(-1px);
+}
+
+.gallery-tool-button:focus-visible {
+  outline: 2px solid #9ce8d1;
+  outline-offset: 3px;
+}
+
+.gallery-tool-button--primary {
+  border-color: rgba(156, 232, 209, .46);
+  background: rgba(37, 76, 71, .9);
+}
+
+.gallery-tool-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+}
+
+.gallery-profile-edit {
+  margin: 18px 0 0;
+}
+
+.gallery-profile-modal[hidden],
+.gallery-uploads-panel[hidden] {
+  display: none !important;
+}
+
+.gallery-profile-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 7, 12, .76);
+  backdrop-filter: blur(10px);
+}
+
+.gallery-profile-card {
+  position: relative;
+  width: min(100%, 440px);
+  border: 1px solid rgba(210, 222, 245, .22);
+  border-radius: 22px;
+  padding: clamp(22px, 5vw, 34px);
+  background: #111722;
+  color: #f2f5fb;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+}
+
+.gallery-profile-card h2 {
+  margin: 0 42px 10px 0;
+  font: 400 clamp(24px, 5vw, 34px)/1.12 Georgia, "Times New Roman", serif;
+}
+
+.gallery-profile-card p {
+  color: rgba(220, 229, 247, .72);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gallery-profile-card label {
+  display: block;
+  margin: 18px 0 7px;
+  color: rgba(220, 229, 247, .78);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.gallery-profile-card input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(210, 222, 245, .26);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(5, 8, 14, .68);
+  color: #fff;
+  font: inherit;
+}
+
+.gallery-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.gallery-profile-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(210, 222, 245, .2);
+  border-radius: 50%;
+  background: transparent;
+  color: #f2f5fb;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.gallery-tool-status {
+  min-height: 1.2em;
+  margin: 10px 0 0;
+  color: #9ce8d1;
+  font-size: 12px;
+}
+
+.gallery-uploads-launcher {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 900;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .38);
+}
+
+.gallery-uploads-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 72px;
+  z-index: 900;
+  box-sizing: border-box;
+  width: min(620px, calc(100vw - 36px));
+  max-height: min(58vh, 560px);
+  overflow: auto;
+  border: 1px solid rgba(210, 222, 245, .24);
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(12, 16, 25, .97);
+  color: #f2f5fb;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .48);
+  backdrop-filter: blur(14px);
+}
+
+.gallery-uploads-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.gallery-uploads-heading h2 {
+  margin: 0;
+  font: 400 22px/1.15 Georgia, "Times New Roman", serif;
+}
+
+.gallery-uploads-heading p {
+  margin: 5px 0 0;
+  color: rgba(220, 229, 247, .63);
+  font-size: 11px;
+}
+
+.gallery-uploads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.gallery-upload-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(210, 222, 245, .14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .04);
+}
+
+.gallery-upload-card img {
+  display: block;
+  width: 100%;
+  height: 112px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, .06);
+}
+
+.gallery-upload-card figcaption {
+  overflow: hidden;
+  padding: 8px 9px;
+  color: rgba(242, 245, 251, .84);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gallery-upload-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 18px 8px;
+  color: rgba(220, 229, 247, .7);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .gallery-account-tools {
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .gallery-tool-button {
+    min-height: 42px;
+    padding: 10px 13px;
+    font-size: 9px;
+  }
+
+  .gallery-uploads-launcher {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .gallery-uploads-panel {
+    right: 12px;
+    bottom: 66px;
+    width: calc(100vw - 24px);
+    max-height: 55vh;
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-tool-button { transition: none; }
+}
