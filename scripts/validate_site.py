@@ -17,9 +17,8 @@ REQUIRED = [
     'index.html', 'museai.html', '404.html', 'support-success.html', 'premium-gate.html', 'corridor.html',
     'assets/css/main.css', 'assets/css/paywall.css', 'assets/css/gallery-tools.css',
     'assets/js/app.js', 'assets/js/paywall.js', 'assets/js/gallery-tools.js',
-    'assets/images/favicon.png', 'favicon.ico', 'social-image.png',
-    'assets/promo/comic-01-creative-chaos.webp', 'assets/promo/comic-02-ask-before-launch.webp',
-    'assets/promo/comic-03-tiny-idea-guard.webp', 'assets/gallery-images/manifest.json',
+    'assets/images/favicon.png', 'favicon.ico', 'assets/gallery-images/gallery-placeholder.webp',
+    'assets/gallery-images/manifest.json',
     'functions/corridor.html.js', 'functions/auth/login.js', 'functions/auth/callback.js',
     'functions/api/session.js', 'functions/api/entitlement.js',
     'functions/api/billing/paypal-intent.js', 'functions/api/billing/paypal-verify.js',
@@ -50,6 +49,8 @@ class Page(HTMLParser):
             self.links.append(attrs['href'])
         if tag in {'img', 'script', 'iframe', 'source'} and attrs.get('src'):
             self.assets.append(attrs['src'])
+        if tag == 'meta' and attrs.get('property', '').lower() in {'og:image', 'twitter:image'} and attrs.get('content'):
+            self.assets.append(attrs['content'])
         if tag == 'link' and attrs.get('href'):
             rel = attrs.get('rel', '').lower()
             if rel in {'stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon'}:
@@ -128,8 +129,8 @@ for page_path in pages:
             problems.append(f'{page_path.name}: missing local asset {src}')
 
 for filename in PROTECTED:
-    if not (ROOT / 'assets/gallery-images' / filename).is_file():
-        problems.append(f'Source Premium image is missing: {filename}')
+    if (ROOT / 'assets/gallery-images' / filename).exists():
+        problems.append(f'Bundled Premium source image must be removed: {filename}')
     if f'/premium-assets/{filename}' not in (ROOT / 'corridor.html').read_text(encoding='utf-8'):
         problems.append(f'corridor.html does not use private media route for {filename}')
 index = (ROOT / 'index.html').read_text(encoding='utf-8')
@@ -181,24 +182,28 @@ for page_name in ('profile.html', 'deck.html'):
 
 manifest = json.loads((ROOT / 'assets/gallery-images/manifest.json').read_text(encoding='utf-8'))
 entries = manifest if isinstance(manifest, list) else manifest.get('images', manifest.get('items', []))
-if len(entries) != 96:
-    problems.append(f'Source gallery manifest expected 96 entries; found {len(entries)}')
+if len(entries) != 1:
+    problems.append(f'Gallery manifest should contain the single placeholder entry; found {len(entries)}')
 for entry in entries:
     filename = (entry.get('src') or entry.get('filename') or entry.get('file')) if isinstance(entry, dict) else entry
-    if not isinstance(filename, str):
-        problems.append(f'Gallery manifest has an invalid image entry: {entry!r}')
-        continue
-    candidate = Path(filename.lstrip('./'))
-    target = ROOT / candidate if candidate.parts and candidate.parts[0] == 'assets' else ROOT / 'assets/gallery-images' / candidate.name
-    if not target.is_file():
-        problems.append(f'Gallery manifest references missing source asset {filename}')
-if len(list((ROOT / 'assets/gallery-images').glob('*.webp'))) != 96:
-    problems.append('Original source gallery WebP count changed from 96')
+    if filename != 'assets/gallery-images/gallery-placeholder.webp':
+        problems.append(f'Gallery manifest must point only to the local placeholder; found {filename!r}')
+    elif not (ROOT / filename).is_file():
+        problems.append(f'Gallery manifest references missing placeholder {filename}')
+source_gallery = list((ROOT / 'assets/gallery-images').glob('*.webp'))
+if [path.name for path in source_gallery] != ['gallery-placeholder.webp']:
+    problems.append('Source gallery must contain exactly one WebP placeholder')
+allowed_images = {'assets/gallery-images/gallery-placeholder.webp', 'assets/images/favicon.png', 'favicon.ico'}
+image_suffixes = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.ico'}
+actual_images = {path.relative_to(ROOT).as_posix() for path in ROOT.rglob('*') if path.is_file() and path.suffix.lower() in image_suffixes and path.relative_to(ROOT).parts[0] not in {'dist', 'premium-upload'}}
+unexpected_images = sorted(actual_images - allowed_images)
+if unexpected_images:
+    problems.append('Unexpected bundled image files remain: ' + ', '.join(unexpected_images))
 
 if (ROOT / 'dist').is_dir():
     public_files = list((ROOT / 'dist/assets/gallery-images').glob('*.webp'))
-    if len(public_files) != 86:
-        problems.append(f'dist should contain 86 public gallery WebP files, found {len(public_files)}')
+    if [path.name for path in public_files] != ['gallery-placeholder.webp']:
+        problems.append(f'dist should contain only the gallery placeholder; found {[p.name for p in public_files]}')
     leaked = [name for name in PROTECTED if (ROOT / 'dist/assets/gallery-images' / name).exists()]
     if leaked:
         problems.append('Premium source images leaked into public dist: ' + ', '.join(sorted(leaked)))
@@ -207,4 +212,4 @@ if problems:
     for problem in problems:
         print('FAIL:', problem, file=sys.stderr)
     sys.exit(1)
-print(f'PASS: validated {len(pages)} HTML pages, local links/assets, fail-closed membership routes, payment verification, and all 96 source gallery images.')
+print(f'PASS: validated {len(pages)} HTML pages, local links/assets, one gallery placeholder, no bundled gallery photos, fail-closed membership routes, and payment verification.')

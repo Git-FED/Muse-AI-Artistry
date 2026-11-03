@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#07070a">
   <meta property="og:title" content="MuseAI Corridor — Infinite Archive">
   <meta property="og:description" content="Walk through the MuseAI corridor of creative AI concepts and imagined digital worlds.">
-  <meta property="og:image" content="social-image.png">
+  <meta property="og:image" content="assets/gallery-images/gallery-placeholder.webp">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/png" href="assets/images/favicon.png">
   <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
@@ -497,8 +497,18 @@
   ];
 
   const N = ITEMS.length;
+  const PLACEHOLDER_IMAGE = "assets/gallery-images/gallery-placeholder.webp";
   const thumb = s => s;
   const full  = s => s;
+  function setSafeImageSource(image, source) {
+    image.dataset.placeholderFallback = 'false';
+    image.onerror = () => {
+      if (image.dataset.placeholderFallback === 'true') return;
+      image.dataset.placeholderFallback = 'true';
+      image.src = PLACEHOLDER_IMAGE;
+    };
+    image.src = source;
+  }
 
   /* ------------------------------------------------------------------
      Tuning
@@ -558,7 +568,7 @@
     const img = new Image();
     img.alt = item.title;
     img.decoding = 'async';
-    img.src = thumb(item.seed);
+    setSafeImageSource(img, thumb(item.seed));
     img.draggable = false;
 
     const label = document.createElement('div');
@@ -787,7 +797,7 @@
     lbIndex = i;
     const it = ITEMS[i];
 
-    lbImg.src = full(it.seed);
+    setSafeImageSource(lbImg, full(it.seed));
     lbImg.alt = it.title;
     lbTitle.textContent = it.title;
     lbMeta.textContent = `${it.category}`;
