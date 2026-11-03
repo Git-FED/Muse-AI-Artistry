@@ -1,4 +1,4 @@
-name: Validate static site
+name: Validate and stage site
 on:
   push:
   pull_request:
@@ -7,5 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate HTML, routes, payment gate, favicon, and gallery assets
+      - name: Validate galleries, paywall functions, links, and source images
         run: python3 scripts/validate_site.py
+      - name: Stage Cloudflare Pages static assets without Premium originals
+        run: python3 scripts/build_pages.py
