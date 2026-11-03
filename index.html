@@ -363,6 +363,7 @@
 
     <div class="gallery-account-tools" id="galleryAccountTools" role="group" aria-label="Gallery tools">
       <button class="gallery-tool-button" id="galleryUploadTrigger" type="button">＋ Upload</button>
+      <button class="gallery-tool-button" id="adminBtn" type="button">Admin</button>
       <input id="localImageUpload" class="gallery-tool-input" type="file" accept="image/*" multiple aria-label="Choose images to upload">
       <a class="gallery-tool-button" href="profile.html">Profile</a>
       <a class="gallery-tool-button gallery-tool-button--primary" href="/auth/login?returnTo=%2Findex.html" aria-label="Sign in with MuseAI">Sign in</a>
@@ -402,6 +403,42 @@
     </figure>
   </div>
 
+
+  <div id="adminModal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#fff;color:#111;border-radius:16px;padding:24px;max-width:360px;width:90%;">
+      <h2 style="margin-bottom:4px;">Admin Login</h2>
+      <p style="margin-bottom:12px;color:#555;">Enter the admin key set in the Worker. No account, no signup, nothing stored in a database.</p>
+      <input id="adminKeyInput" type="password" placeholder="Admin key" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;margin-bottom:12px;">
+      <button id="adminLoginBtn" type="button" style="width:100%;padding:10px;border-radius:10px;background:#111;color:#fff;">Log in</button>
+      <button id="adminCloseBtn" type="button" style="width:100%;padding:10px;margin-top:8px;border-radius:10px;">Cancel</button>
+      <p id="adminMsg" style="margin-top:10px;color:#c00;"></p>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    const modal = document.getElementById('adminModal');
+    const btn = document.getElementById('adminBtn');
+    if (!btn || !modal) return;
+    btn.addEventListener('click', () => {
+      if (sessionStorage.getItem('museai.admin.v1')) { sessionStorage.removeItem('museai.admin.v1'); if (typeof refreshAdminUI === 'function') refreshAdminUI(); return; }
+      modal.hidden = false;
+    });
+    document.getElementById('adminCloseBtn').addEventListener('click', () => { modal.hidden = true; });
+    document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+      const key = document.getElementById('adminKeyInput').value;
+      const msg = document.getElementById('adminMsg');
+      try {
+        const res = await fetch('https://muse-ai-artistry.fedos.workers.dev/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) });
+        if (!res.ok) throw new Error();
+        sessionStorage.setItem('museai.admin.v1', key);
+        document.getElementById('adminKeyInput').value = '';
+        modal.hidden = true;
+        if (typeof refreshAdminUI === 'function') refreshAdminUI();
+      } catch (_) { msg.textContent = 'Wrong admin key.'; }
+    });
+  })();
+  </script>
 <script>
 (() => {
   "use strict";
@@ -481,6 +518,24 @@
     return res.json();
   }
   const serverState = {};
+  function adminKey() { return sessionStorage.getItem('museai.admin.v1') || ''; }
+  function refreshAdminUI() {
+    const on = Boolean(adminKey());
+    document.querySelectorAll('.tile-delete').forEach(b => { b.hidden = !on; });
+    const ab = document.getElementById('adminBtn'); if (ab) ab.textContent = on ? 'Logout Admin' : 'Admin';
+  }
+  async function deleteItem(item, card) {
+    if (!adminKey()) { showToast('Admin login required to delete.'); return; }
+    if (!confirm('Delete this image permanently?')) return;
+    try {
+      const res = await fetch(API_BASE + '/api/item?item_id=' + encodeURIComponent(itemKey(item)), { method: 'DELETE', headers: { 'X-Admin-Key': adminKey() } });
+      if (res.status === 401) { sessionStorage.removeItem('museai.admin.v1'); refreshAdminUI(); showToast('Admin login expired. Log in again.'); return; }
+      if (!res.ok) throw new Error('Delete ' + res.status);
+      if (card) card.remove();
+      const i = galleryItems.indexOf(item); if (i !== -1) galleryItems.splice(i, 1);
+      showToast('Image deleted.');
+    } catch (_) { showToast('Could not delete image.'); }
+  }
   let toastTimer = 0;
   const pointer = { x: 0, y: 0 };
   let hasPointer = false;
@@ -679,7 +734,13 @@
     download.setAttribute('aria-label', `Download ${item.title}`);
     download.innerHTML = '↓ Download <span class="download-count">0</span>';
     download.addEventListener('click', () => downloadItem(item));
-    actions.append(like, share, commentButton, download);
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'social-button tile-delete';
+    del.textContent = '🗑 Delete';
+    del.hidden = !adminKey();
+    del.addEventListener('click', () => deleteItem(item, fig));
+    actions.append(like, share, commentButton, download, del);
 
     const panel = document.createElement('div');
     panel.className = 'comments-panel';
