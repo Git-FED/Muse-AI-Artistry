@@ -1,5 +1,6 @@
 # MuseAI — creative systems archive
 
+<video src="https://github.com/user-attachments/assets/d029f65c-ad8b-4ec0-9fee-c6f8f49f99fa" controls muted width="100%"></video>
 A visual archive of creative AI concepts, imagined interfaces, and ideas in motion. This is a static site built from HTML, CSS, and JavaScript, with nine interactive galleries and local image assets.
 
 ## Start here
