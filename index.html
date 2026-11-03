@@ -469,6 +469,7 @@
     profile: readLocalJSON(LOCAL_KEYS.profile, null)
   };
 
+  // --- D1/R2 server state (replaces local-only counts/uploads) ---
   const API_BASE = 'https://muse-ai-artistry.fedos.workers.dev';
   function viewerId() {
     let id = localStorage.getItem('museai.viewer.v1');
@@ -480,7 +481,34 @@
     if (!res.ok) throw new Error('API ' + res.status);
     return res.json();
   }
-  const serverState = {};
+  const serverState = {}; // itemKey -> {views, likes, comments, liked}
+  async function syncMetricsInserted(item) {
+    const key = itemKey(item);
+    try {
+      const m = await apiCall('/api/metrics?item_id=' + encodeURIComponent(key) + '&viewer_id=' + encodeURIComponent(viewerId()));
+      serverState[key] = m;
+    } catch (_) { return; /* keep local display if API unreachable */ }
+    const m = serverState[key];
+    const card = tiles.find(tile => tile.dataset.itemId === key);
+    if (card) {
+      const like = card.querySelector('.like-button');
+      if (like) {
+        like.setAttribute('aria-pressed', String(Boolean(m.liked)));
+        like.classList.toggle('is-liked', Boolean(m.liked));
+        like.querySelector('.like-label').textContent = m.liked ? 'Liked' : 'Like';
+        like.querySelector('.like-count').textContent = String(m.likes);
+        like.querySelector('[aria-hidden="true"]').textContent = m.liked ? '♥' : '♡';
+      }
+      card.querySelector('.comment-count').textContent = String(m.comments);
+      card.querySelector('.tile-view-count').textContent = String(m.views);
+      card.querySelector('.tile-views').setAttribute('aria-label', `${m.views} views`);
+    }
+    if (lbIndex !== -1 && itemKey(galleryItems[lbIndex]) === key) {
+      lbLikes.textContent = String(m.likes);
+      lbComments.textContent = String(m.comments);
+      lbViews.textContent = String(m.views);
+    }
+  }
   let toastTimer = 0;
   const pointer = { x: 0, y: 0 };
   let hasPointer = false;
@@ -522,7 +550,8 @@
     return Array.isArray(list) ? list : [];
   }
 
-  function syncMetrics(item) { syncMetricsServer(item); }
+  function syncMetrics(item) { serverSync(item); }
+  async function serverSync(item) { await syncMetricsServer(item); }
   async function syncMetricsServer(item) {
     const key = itemKey(item);
     try { const m = await apiCall('/api/metrics?item_id=' + encodeURIComponent(key) + '&viewer_id=' + encodeURIComponent(viewerId())); serverState[key] = m; } catch (_) { return; }
@@ -781,7 +810,7 @@
         const item = { id: it.id, seed: '', imageUrl: API_BASE + it.url, mimeType: it.mime, title: it.title, category: it.category || 'Your uploads', ar: 1.0 };
         const index = galleryItems.push(item) - 1; renderTile(item, index, true); syncMetrics(item);
       }
-    } catch (_) { }
+    } catch (_) { /* API unreachable: uploads unavailable this load */ }
   }
   uploadInput.addEventListener('change', async () => {
     const files = Array.from(uploadInput.files || []);
