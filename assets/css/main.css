@@ -57,3 +57,5 @@ header.bar{flex-wrap:wrap!important}
 @media(prefers-reduced-motion:reduce){.museai-ticker-track,.hero-orbit,.hero-float{animation:none!important;will-change:auto}.comic-card,.comic-card img,.museai-paycard,.museai-support-trigger{transition:none!important}.comic-card:hover,.museai-paycard:hover,.museai-support-trigger:hover{transform:none}}
 
 .promo-footer-links{flex-wrap:wrap}
+
+.museai-paygrid a.museai-support-link{display:flex;align-items:center;justify-content:center;min-height:72px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.035);color:#dffcff;text-align:center;text-decoration:none;font:600 12px/1.5 var(--m-font);transition:border-color .2s,background .2s,transform .2s}.museai-paygrid a.museai-support-link:hover{transform:translateY(-2px);border-color:rgba(0,240,255,.4);background:rgba(0,240,255,.06)}
